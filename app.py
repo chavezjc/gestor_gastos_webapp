@@ -1,14 +1,13 @@
-from flask import Flask
+from flask import Flask, render_template # Añadimos render_template aquí
 
-# Crear una instancia de la aplicación Flask
 app = Flask(__name__)
 
-# Definir una ruta para la página de inicio
 @app.route('/')
 def hello_world():
-    return '¡Hola Mundo desde Flask!'
+    # Esta era la línea antigua:
+    # return '¡Hola Mundo desde Flask!'
+    # Esta es la nueva línea:
+    return render_template('index.html') 
 
-# Esto permite ejecutar la aplicación directamente con "python app.py"
-# Solo para desarrollo, no para producción.
 if __name__ == '__main__':
     app.run(debug=True)
