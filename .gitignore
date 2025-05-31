@@ -1,0 +1,23 @@
+# Entorno Virtual
+venv/
+.venv/
+
+# Archivos compilados de Python y caché
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de configuración del editor/IDE
+.vscode/
+.idea/
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Bases de datos SQLite (si decides usarla temporalmente en el futuro)
+*.sqlite3
+*.db
+
+# Archivos de dependencias (si usas pip freeze > requirements.txt, este archivo sí se versiona)
+# pero no los paquetes descargados directamente
