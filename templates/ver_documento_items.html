@@ -29,16 +29,34 @@
     </style>
 </head>
 <body>
-    <h1>Detalle del Documento a Rendir</h1>
+   <h1>Detalle del Documento a Rendir</h1>
+
     <div class="document-details">
         <p><strong>ID Documento:</strong> {{ documento.id }}</p>
         <p><strong>Tipo:</strong> {{ documento.tipo_documento }}</p>
         <p><strong>Número:</strong> {{ documento.numero_documento }}</p>
         <p><strong>Fecha Emisión:</strong> {{ documento.fecha_emision.strftime('%d/%m/%Y') if documento.fecha_emision else 'N/A' }}</p>
-        <p><strong>Monto Total Documento:</strong> {{ "%.2f"|format(documento.monto_total_documento) if documento.monto_total_documento is not none else 'N/A' }} bs.</p>
+        <p><strong>Monto Total Documento:</strong> 
+            <strong style="color: blue;">{{ "%.2f"|format(documento.monto_total_documento) if documento.monto_total_documento is not none else 'No especificado' }} bs.</strong>
+        </p>
         <p><strong>Descripción General:</strong> {{ documento.descripcion_general if documento.descripcion_general else 'N/A' }}</p>
         <p><strong>Estado:</strong> {{ documento.estado_documento }}</p>
+
+        <hr style="margin: 10px 0;">
+        <p><strong>Suma de Ítems Registrados:</strong> 
+            <strong style="color: green;">{{ "%.2f"|format(suma_items_registrados) }} bs.</strong>
+        </p>
+        <p><strong>Saldo Pendiente por Rendir:</strong> 
+            <strong style="color: {% if saldo_por_rendir is not none and saldo_por_rendir < 0 %}red{% elif saldo_por_rendir == 0 and documento.monto_total_documento is not none %}darkgreen{% else %}orange{% endif %};">
+            {% if documento.monto_total_documento is not none %}
+                {{ "%.2f"|format(saldo_por_rendir) }} bs.
+            {% else %}
+                N/A (Monto total del documento no especificado)
+            {% endif %}
+            </strong>
+        </p>
     </div>
+
 
     <h2>Ítems de Gasto Asociados</h2>
     <div class="add-item-link">

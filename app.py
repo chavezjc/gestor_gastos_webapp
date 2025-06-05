@@ -443,11 +443,27 @@ def eliminar_documento(id):
     return redirect(url_for('listar_documentos'))
 
 # --- CRUD ItemsGasto ---
+# Dentro de app.py
+
 @app.route('/documento/<int:documento_id>/items')
 def ver_documento_items(documento_id):
     documento = DocumentosARendir.query.get_or_404(documento_id)
     items_del_documento = documento.items.order_by(ItemsGasto.fecha_item.asc()).all()
-    return render_template('ver_documento_items.html', documento=documento, items_lista=items_del_documento)
+
+    # --- Calcular suma de ítems y saldo pendiente ---
+    suma_items_actual = sum(item.monto_item for item in items_del_documento if item.monto_item is not None)
+
+    saldo_pendiente = None
+    if documento.monto_total_documento is not None:
+        saldo_pendiente = documento.monto_total_documento - suma_items_actual
+    # --- Fin del cálculo ---
+
+    return render_template('ver_documento_items.html', 
+                           documento=documento, 
+                           items_lista=items_del_documento,
+                           suma_items_registrados=suma_items_actual, # <--- Nuevo dato
+                           saldo_por_rendir=saldo_pendiente         # <--- Nuevo dato
+                          )
 
 @app.route('/documento/<int:documento_id>/item/nuevo', methods=['GET', 'POST'])
 def crear_item_gasto(documento_id):

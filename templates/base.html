@@ -86,24 +86,151 @@
         .button-link.add:hover { background-color: #218838; }
         .actions a, .actions button { margin-right: 8px; text-decoration: none; }
         .actions button { background:none; border:none; padding:0; color:red; text-decoration:underline; cursor:pointer; }
+
+/* ... (tus estilos existentes para body, nav.main-nav, .container, etc.) ... */
+
+/* Estilos para el menú desplegable de Configuración */
+nav.main-nav ul li.dropdown {
+    position: relative; /* Necesario para posicionar el contenido del desplegable */
+    display: inline-block; /* Para que se comporte bien con otros <li> */
+}
+
+nav.main-nav ul li.dropdown .dropdown-content {
+    display: none; /* Oculto por defecto */
+    position: absolute;
+    background-color: #333; /* Mismo color que la barra o uno que contraste */
+    min-width: 200px; /* Ancho mínimo del desplegable */
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1; /* Para que aparezca por encima de otro contenido */
+    border-radius: 0 0 4px 4px; /* Bordes redondeados abajo */
+}
+
+nav.main-nav ul li.dropdown .dropdown-content li {
+    width: 100%; /* Que los items ocupen todo el ancho del desplegable */
+    margin-left: 0; /* Quitamos el margen que tenían los <li> principales */
+}
+
+nav.main-nav ul li.dropdown .dropdown-content li a {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block; /* Para que cada enlace ocupe toda la línea */
+    text-align: left;
+}
+
+nav.main-nav ul li.dropdown .dropdown-content li a:hover {
+    background-color: #555; /* Color al pasar el mouse */
+    text-decoration: none; /* Mantenemos sin subrayado */
+}
+
+/* Mostrar el contenido del desplegable cuando se pasa el mouse sobre el <li> padre */
+nav.main-nav ul li.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* ... (tus estilos existentes) ... */
+
+/* Estilos para el botón hamburguesa */
+.hamburger-button {
+    display: none; /* Oculto en pantallas grandes por defecto */
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.8em; /* Tamaño del icono hamburguesa */
+    cursor: pointer;
+    padding: 0 10px;
+}
+
+/* Estilos para el contenedor de enlaces del menú */
+.nav-links-container {
+    display: flex; /* Por defecto en escritorio, se muestra flex */
+}
+
+/* --- Media Query para Móviles --- */
+@media screen and (max-width: 768px) { /* Ajusta este valor según necesites */
+    nav.main-nav {
+        flex-wrap: wrap; /* Permitir que el botón y la marca se ajusten */
+    }
+
+    .hamburger-button {
+        display: block; /* Mostrar el botón hamburguesa en pantallas pequeñas */
+        order: 1; /* Para que aparezca después del brand si es necesario, o ajusta el orden */
+        margin-left: auto; /* Empuja el botón a la derecha */
+    }
+
+    .nav-links-container {
+        display: none; /* Ocultar los enlaces por defecto en móviles */
+        width: 100%; /* Ocupar todo el ancho cuando se muestre */
+        order: 3; /* Para que aparezca debajo del brand y el botón */
+    }
+
+    .nav-links-container.active { /* Clase que añadiremos con JS para mostrar el menú */
+        display: block; 
+    }
+
+    nav.main-nav ul {
+        flex-direction: column; /* Enlaces en columna en móviles */
+        width: 100%;
+    }
+
+    nav.main-nav ul li {
+        margin-left: 0;
+        text-align: center; /* Centrar texto de enlaces */
+        width: 100%;
+        border-top: 1px solid #444; /* Separador entre items */
+    }
+    nav.main-nav ul li:first-child {
+        border-top: none;
+    }
+    nav.main-nav ul li a { /* Estilo para enlaces en móvil */
+        padding: 15px 0;
+        display: block; /* Que ocupen todo el espacio del li */
+    }
+
+    /* Ajustes para el desplegable de Configuración en móviles */
+    nav.main-nav ul li.dropdown .dropdown-content {
+        position: static; /* Quitar posicionamiento absoluto en móviles */
+        display: none; /* Oculto por defecto también en móvil, JS lo manejará */
+        background-color: #444; /* Un fondo ligeramente diferente para el submenú */
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    nav.main-nav ul li.dropdown .dropdown-content.active-dropdown { /* Clase para mostrar submenú con JS */
+        display: block;
+    }
+
+    nav.main-nav ul li.dropdown .dropdown-content li a {
+        padding: 10px 0 10px 30px; /* Indentación para sub-items */
+        text-align: center; /* O left si prefieres */
+        font-size: 0.9em;
+    }
+}
+
     </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="{{ url_for('hello_world') }}" class="nav-brand">Gestor Gastos</a>
+    <a href="{{ url_for('hello_world') }}" class="nav-brand">Gestor Gastos</a>
+
+    <button class="hamburger-button" id="hamburgerButton" aria-label="Abrir menú" aria-expanded="false">
+        &#9776; </button>
+
+    <div class="nav-links-container" id="navLinksContainer">
         <ul>
             <li><a href="{{ url_for('listar_documentos') }}">Documentos a Rendir</a></li>
-            <li>
-                <a href="#">Configuración</a> <ul style="/* Estilos básicos para un submenú si fuera necesario, o simplemente ponerlos debajo */">
-                    <li><a href="{{ url_for('listar_personal') }}" style="font-size:0.9em; padding-left:10px;">- Personal</a></li>
-                    <li><a href="{{ url_for('listar_proveedores') }}" style="font-size:0.9em; padding-left:10px;">- Proveedores/Servicios</a></li>
-                    <li><a href="{{ url_for('listar_conceptos') }}" style="font-size:0.9em; padding-left:10px;">- Conceptos Varios</a></li>
-                    <li><a href="{{ url_for('listar_categorias') }}" style="font-size:0.9em; padding-left:10px;">- Categorías</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropbtn" onclick="toggleConfigMenu(event)">Configuración &#9662;</a> 
+                <ul class="dropdown-content" id="configDropdown">
+                    <li><a href="{{ url_for('listar_personal') }}">Personal</a></li>
+                    <li><a href="{{ url_for('listar_proveedores') }}">Proveedores/Servicios</a></li>
+                    <li><a href="{{ url_for('listar_conceptos') }}">Conceptos Varios</a></li>
+                    <li><a href="{{ url_for('listar_categorias') }}">Categorías</a></li>
                 </ul>
             </li>
             </ul>
-    </nav>
-
+    </div>
+</nav>
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
@@ -118,6 +245,41 @@
         {% block content %}
         {% endblock %}
     </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const hamburgerButton = document.getElementById('hamburgerButton');
+        const navLinksContainer = document.getElementById('navLinksContainer');
+        const configDropbtn = document.querySelector('.dropdown .dropbtn'); // Botón de Configuración
+        const configDropdownContent = document.getElementById('configDropdown'); // Contenido del desplegable Configuración
 
+        if (hamburgerButton && navLinksContainer) {
+            hamburgerButton.addEventListener('click', function() {
+                navLinksContainer.classList.toggle('active');
+                // Actualizar aria-expanded
+                const isExpanded = navLinksContainer.classList.contains('active');
+                hamburgerButton.setAttribute('aria-expanded', isExpanded);
+                // Si el menú principal se cierra, también cerramos el submenú de config
+                if (!isExpanded && configDropdownContent) {
+                    configDropdownContent.classList.remove('active-dropdown');
+                }
+            });
+        }
+
+        // Función para el desplegable de Configuración (usada en el onclick)
+        window.toggleConfigMenu = function(event) {
+            // Solo prevenir default si es un enlace #, si tiene URL real, permitirla si no estamos en modo "hamburguesa activa"
+            // Para simplificar, siempre prevenimos si el menú hamburguesa es visible
+            if (window.getComputedStyle(hamburgerButton).display !== 'none') { // Si el botón hamburguesa está visible (móvil)
+                 event.preventDefault(); // Prevenir navegación si es un enlace '#'
+            }
+            if (configDropdownContent) {
+                configDropdownContent.classList.toggle('active-dropdown');
+            }
+        }
+        
+        // Opcional: Cerrar el menú hamburguesa si se hace clic fuera de él o en un enlace (más avanzado)
+        // Por ahora, lo dejamos así para mantenerlo simple.
+    });
+</script>
 </body>
 </html>
