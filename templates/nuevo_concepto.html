@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Nuevo Concepto - Gestor de Gastos{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir Nuevo Concepto de Gasto</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold;}
+        input[type="text"], textarea { 
+            padding: 8px; 
+            width: 100%; 
+            max-width: 400px; 
+            box-sizing: border-box; 
+            margin-bottom:10px;
+        }
+        textarea { min-height: 80px; } /* Altura para el textarea */
+        input[type="checkbox"] { 
+            width: auto; 
+            margin-right: 5px;
+        }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Añadir Nuevo Concepto de Gasto Varios</h1>
+
+    <form method="POST" action="{{ url_for('crear_concepto') }}">
+        <div class="form-group">
+            <label for="nombre_concepto">Nombre del Concepto:</label>
+            <input type="text" id="nombre_concepto" name="nombre_concepto" required>
+        </div>
+        <div class="form-group">
+            <label for="descripcion_concepto">Descripción del Concepto (Opcional):</label>
+            <textarea id="descripcion_concepto" name="descripcion_concepto" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+            <input type="checkbox" id="activo" name="activo" value="true" checked>
+            <label for="activo">Activo</label>
+        </div>
+        <button type="submit">Guardar Concepto</button>
+    </form>
+
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('listar_conceptos') }}">Volver al Listado</a><br>
+        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
+    </p>
+</body>
+</html>
+{% endblock %}

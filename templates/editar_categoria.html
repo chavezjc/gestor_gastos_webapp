@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Editar - Gestor de Gastos{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Categoría de Gastos</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold;}
+        input[type="text"], textarea { 
+            padding: 8px; 
+            width: 100%; 
+            max-width: 400px; 
+            box-sizing: border-box; 
+            margin-bottom:10px;
+        }
+        textarea { min-height: 80px; }
+        input[type="checkbox"] { 
+            width: auto; 
+            margin-right: 5px;
+        }
+        button { padding: 10px 15px; background-color: #28a745; color: white; border: none; cursor: pointer; } /* Botón verde */
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <h1>Editar Categoría Principal de Gasto</h1>
+
+    <form method="POST" action="{{ url_for('editar_categoria', id=categoria.id) }}">
+        <div class="form-group">
+            <label for="nombre_categoria">Nombre de la Categoría:</label>
+            <input type="text" id="nombre_categoria" name="nombre_categoria" value="{{ categoria.nombre_categoria }}" required>
+        </div>
+        <div class="form-group">
+            <label for="descripcion_categoria">Descripción de la Categoría (Opcional):</label>
+            <textarea id="descripcion_categoria" name="descripcion_categoria" rows="3">{{ categoria.descripcion_categoria if categoria.descripcion_categoria }}</textarea>
+        </div>
+        <div class="form-group">
+            <input type="checkbox" id="activa" name="activa" value="true" {% if categoria.activa %}checked{% endif %}>
+            <label for="activa">Activa</label>
+        </div>
+        <button type="submit">Actualizar Categoría</button>
+    </form>
+
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('listar_categorias') }}">Volver al Listado</a><br>
+        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
+    </p>
+</body>
+</html>
+{% endblock %}

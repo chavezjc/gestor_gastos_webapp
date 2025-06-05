@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Listado de Personal - Gestor de Gastos{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Personal</title>
+    <style>
+        table { width: 90%; border-collapse: collapse; margin: 20px auto; } /* Ajustado ancho */
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .actions a { margin-right: 8px; text-decoration: none; } /* Estilo para enlaces de acciones */
+        .actions a:hover { text-decoration: underline; }
+        .nav-links { text-align: center; margin-top: 20px; } /* Contenedor para enlaces de navegación */
+    </style>
+</head>
+<body>
+    <h1>Listado de Personal</h1>
+
+    {% if personal_lista %}
+        <div style="overflow-x:auto;">
+<table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre Completo</th>
+                    <th>Documento de Identidad</th>
+                    <th>Cargo</th>
+                    <th>Activo</th>
+                    <th>Acciones</th> </tr>
+            </thead>
+            <tbody>
+                {% for persona in personal_lista %}
+                <tr>
+                    <td>{{ persona.id }}</td>
+                    <td>{{ persona.nombre_completo }}</td>
+                    <td>{{ persona.documento_identidad }}</td>
+                    <td>{{ persona.cargo if persona.cargo else 'N/A' }}</td>
+                    <td>{{ 'Sí' if persona.activo else 'No' }}</td>
+                    <td class="actions"> <a href="{{ url_for('editar_personal', id=persona.id) }}">Editar</a> |
+                    <form action="{{ url_for('eliminar_personal', id=persona.id) }}" method="POST" style="display:inline;">
+    <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar a esta persona?');" style="background:none; border:none; padding:0; color:red; text-decoration:underline; cursor:pointer;">Eliminar</button>
+</form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>{% else %}
+        <p>No hay personal registrado todavía.</p>
+    {% endif %}
+
+    <div class="nav-links"> <a href="{{ url_for('crear_personal') }}">Agregar Personal</a>
+        <br><br>
+        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a> </div>
+</body>
+</html>
+{% endblock %}

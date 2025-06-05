@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Listado de Categorias - Gestor de Gastos{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Categorías Principales de Gasto</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        table { width: 90%; border-collapse: collapse; margin: 20px auto; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .actions a, .actions button { margin-right: 8px; text-decoration: none; }
+        .actions button { background:none; border:none; padding:0; color:red; text-decoration:underline; cursor:pointer; }
+        .actions a:hover, .actions button:hover { text-decoration: underline; }
+        .nav-links { text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Listado de Categorías Principales de Gasto</h1>
+
+    <div style="overflow-x:auto;"> {% if categorias_lista %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre de la Categoría</th>
+                        <th>Descripción</th>
+                        <th>Activa</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for categoria in categorias_lista %}
+                    <tr>
+                        <td>{{ categoria.id }}</td>
+                        <td>{{ categoria.nombre_categoria }}</td>
+                        <td>{{ categoria.descripcion_categoria if categoria.descripcion_categoria else 'N/A' }}</td>
+                        <td>{{ 'Sí' if categoria.activa else 'No' }}</td>
+                        <td class="actions">
+                            <a href="{{ url_for('editar_categoria', id=categoria.id) }}">Editar</a> |
+                            <form action="{{ url_for('eliminar_categoria', id=categoria.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar esta categoría?');">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No hay categorías principales de gasto registradas todavía.</p>
+        {% endif %}
+    </div>
+
+    <div class="nav-links">
+        <a href="{{ url_for('crear_categoria') }}">Agregar Nueva Categoría</a>
+        <br><br>
+        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
+    </div>
+</body>
+</html>
+{% endblock %}

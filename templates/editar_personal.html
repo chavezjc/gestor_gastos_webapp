@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Editar Personal - Gestor de Gastos{% endblock %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Persona</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="text"] { 
+    padding: 8px; 
+    width: 100%; /* Ocupará el ancho disponible */
+    max-width: 400px; /* Pero no más de 400px en pantallas grandes */
+    box-sizing: border-box; 
+    margin-bottom: 10px; /* Espacio extra debajo */
+}
+input[type="checkbox"] { 
+    width: auto; /* Mantiene el tamaño por defecto del checkbox */
+    margin-right: 5px; /* Espacio a la derecha */
+}
+/* También podrías querer estilizar los labels un poco si los campos son 100% width */
+label { 
+    display: block; 
+    margin-bottom: 5px; 
+    font-weight: bold; /* Opcional */
+}
+        button { padding: 10px 15px; background-color: #28a745; color: white; border: none; cursor: pointer; } /* Botón verde para actualizar */
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <h1>Editar Persona del Staff</h1>
+
+    <form method="POST" action="{{ url_for('editar_personal', id=persona.id) }}">
+        <div class="form-group">
+            <label for="nombre_completo">Nombre Completo:</label>
+            <input type="text" id="nombre_completo" name="nombre_completo" value="{{ persona.nombre_completo }}" required>
+        </div>
+        <div class="form-group">
+            <label for="documento_identidad">Documento de Identidad:</label>
+            <input type="text" id="documento_identidad" name="documento_identidad" value="{{ persona.documento_identidad }}" required>
+        </div>
+        <div class="form-group">
+            <label for="cargo">Cargo (Opcional):</label>
+            <input type="text" id="cargo" name="cargo" value="{{ persona.cargo if persona.cargo }}">
+        </div>
+        <div class="form-group">
+            <input type="checkbox" id="activo" name="activo" value="true" {% if persona.activo %}checked{% endif %}>
+            <label for="activo">Activo</label>
+        </div>
+        <button type="submit">Actualizar Persona</button>
+    </form>
+
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('listar_personal') }}">Volver al Listado de Personal</a><br>
+        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
+    </p>
+</body>
+</html>
+{% endblock %}

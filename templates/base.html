@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestor de Gastos{% endblock %}</title>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            margin: 0; /* Quitamos margen por defecto del body */
+            padding: 0;
+            background-color: #f4f4f4; /* Un color de fondo suave */
+        }
+        nav.main-nav {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex; /* Para alinear items */
+            justify-content: space-between; /* Espacio entre logo/título y links */
+            align-items: center;
+        }
+        nav.main-nav a.nav-brand {
+            color: white;
+            text-decoration: none;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        nav.main-nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex; /* Items del menú en línea */
+        }
+        nav.main-nav ul li {
+            margin-left: 20px; /* Espacio entre items del menú */
+        }
+        nav.main-nav ul li a {
+            color: white;
+            text-decoration: none;
+        }
+        nav.main-nav ul li a:hover {
+            text-decoration: underline;
+        }
+        .container { /* Contenedor principal para el contenido */
+            padding: 20px;
+            max-width: 1200px; /* Ancho máximo del contenido */
+            margin: 20px auto; /* Centrar el contenido */
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        /* Estilos para mensajes flash (los que ya tenías) */
+        .flashes { list-style-type: none; padding: 0; margin-bottom: 1em; }
+        .flashes li { padding: 0.75em 1.25em; margin-bottom: 1rem; border: 1px solid transparent; border-radius: 0.25rem; }
+        .flash-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+        .flash-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+        /* Estilos comunes para tablas y formularios (puedes moverlos aquí desde tus otras plantillas) */
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f0f0f0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold;}
+        input[type="text"], input[type="date"], input[type="number"], select, textarea { 
+            padding: 8px; 
+            width: 100%; 
+            max-width: 400px; 
+            box-sizing: border-box; 
+            margin-bottom:10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="checkbox"] { width: auto; margin-right: 5px;}
+        textarea { min-height: 80px; }
+        button[type="submit"], .button-link { 
+            padding: 10px 15px; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 4px;
+            text-decoration: none; /* Para que los .button-link no estén subrayados */
+            display: inline-block; /* Para que los .button-link se comporten como botones */
+        }
+        button[type="submit"] { background-color: #007bff; }
+        button[type="submit"]:hover { background-color: #0056b3; }
+        .button-link.add { background-color: #28a745; } /* Botón verde para añadir */
+        .button-link.add:hover { background-color: #218838; }
+        .actions a, .actions button { margin-right: 8px; text-decoration: none; }
+        .actions button { background:none; border:none; padding:0; color:red; text-decoration:underline; cursor:pointer; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="{{ url_for('hello_world') }}" class="nav-brand">Gestor Gastos</a>
+        <ul>
+            <li><a href="{{ url_for('listar_documentos') }}">Documentos a Rendir</a></li>
+            <li>
+                <a href="#">Configuración</a> <ul style="/* Estilos básicos para un submenú si fuera necesario, o simplemente ponerlos debajo */">
+                    <li><a href="{{ url_for('listar_personal') }}" style="font-size:0.9em; padding-left:10px;">- Personal</a></li>
+                    <li><a href="{{ url_for('listar_proveedores') }}" style="font-size:0.9em; padding-left:10px;">- Proveedores/Servicios</a></li>
+                    <li><a href="{{ url_for('listar_conceptos') }}" style="font-size:0.9em; padding-left:10px;">- Conceptos Varios</a></li>
+                    <li><a href="{{ url_for('listar_categorias') }}" style="font-size:0.9em; padding-left:10px;">- Categorías</a></li>
+                </ul>
+            </li>
+            </ul>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+              <li class="flash-{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+</body>
+</html>

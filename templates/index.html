@@ -1,12 +1,15 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Gastos</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Inicio - Gestor de Gastos{% endblock %}
+
+{% block content %}
     <h1>¡Bienvenido al Gestor de Gastos!</h1>
-    <p>Esta página se está mostrando desde una plantilla HTML.</p>
-</body>
-</html>
+    <p>Utiliza el menú de navegación para empezar a gestionar tus documentos y configuraciones.</p>
+    <p>Tu punto de partida principal para las operaciones es la sección de "Documentos a Rendir".</p>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('listar_documentos') }}" class="button-link add" style="font-size: 1.2em; padding: 15px 30px;">
+            Ir a Documentos a Rendir
+        </a>
+    </div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Listado de Documentos a rendir - Gestor de Gastos{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Documentos a Rendir</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        table { width: 95%; border-collapse: collapse; margin: 20px auto; } /* Un poco más ancho */
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .actions a, .actions button { margin-right: 8px; text-decoration: none; }
+        .actions button { background:none; border:none; padding:0; color:red; text-decoration:underline; cursor:pointer; }
+        .actions a:hover, .actions button:hover { text-decoration: underline; }
+        .nav-links { text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Listado de Documentos a Rendir (Cheques/Transferencias)</h1>
+
+    <div style="overflow-x:auto;"> {% if documentos_lista %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tipo</th>
+                        <th>Número</th>
+                        <th>Fecha Emisión</th>
+                        <th>Monto Total</th>
+                        <th>Descripción General</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documentos_lista %}
+                    <tr>
+                        <td>{{ doc.id }}</td>
+                        <td>{{ doc.tipo_documento }}</td>
+                        <td>{{ doc.numero_documento }}</td>
+                        <td>{{ doc.fecha_emision.strftime('%d/%m/%Y') if doc.fecha_emision else 'N/A' }}</td> <td>{{ "%.2f"|format(doc.monto_total_documento) if doc.monto_total_documento is not none else 'N/A' }} bs.</td> <td>{{ doc.descripcion_general if doc.descripcion_general else 'N/A' }}</td>
+                        <td>{{ doc.estado_documento }}</td>
+                        <td class="actions">
+                            <a href="{{ url_for('ver_documento_items', documento_id=doc.id) }}">Ver Ítems</a>
+                            <a href="{{ url_for('editar_documento', id=doc.id) }}">Editar</a> |
+                            <form action="{{ url_for('eliminar_documento', id=doc.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar este documento? Sus ítems de gasto asociados NO se eliminarán automáticamente con esta acción.');">Eliminar</button>
+                            </form>
+                            </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No hay documentos a rendir registrados todavía.</p>
+        {% endif %}
+    </div>
+
+    <div class="nav-links">
+        <a href="{{ url_for('crear_documento') }}">Agregar Nuevo Documento</a>
+        <br><br>
+        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
+    </div>
+</body>
+</html>
+{% endblock %}

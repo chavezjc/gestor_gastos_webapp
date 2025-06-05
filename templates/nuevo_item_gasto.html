@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Nuevo Items - Gestor de Gastos{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Añadir Nuevo Ítem de Gasto al Documento #{{ documento.numero_documento }}</title>
+    </head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="flash-{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <h1>Añadir Ítem de Gasto al Documento: {{ documento.tipo_documento }} #{{ documento.numero_documento }}</h1>
+
+    <div class="document-details" style="background-color: #e9ecef; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+        <p><strong>Monto Total del Documento:</strong> 
+            {{ "%.2f"|format(monto_total_doc) if monto_total_doc is not none else 'No especificado' }} bs.
+        </p>
+        <p><strong>Suma de Ítems Ya Registrados:</strong> {{ "%.2f"|format(suma_ya_rendida) }} bs.</p>
+        <p><strong>Saldo Pendiente por Rendir:</strong> 
+            <strong>
+            {% if monto_total_doc is not none %}
+                {{ "%.2f"|format(saldo_pendiente) }} bs.
+            {% else %}
+                N/A (Monto total del documento no especificado)
+            {% endif %}
+            </strong>
+        </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('crear_item_gasto', documento_id=documento.id) }}">
+        <div class="form-group">
+            <label for="descripcion_item">Descripción del Ítem:</label>
+            <textarea id="descripcion_item" name="descripcion_item" rows="3" required>{{ descripcion_item_prev if descripcion_item_prev }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="monto_item">Monto del Ítem (bs.):</label>
+            <input type="number" id="monto_item" name="monto_item" step="0.01" min="0.01" value="{{ monto_item_prev if monto_item_prev }}" required>
+        </div>
+        <div class="form-group">
+            <label for="fecha_item">Fecha del Ítem:</label>
+            <input type="date" id="fecha_item" name="fecha_item" value="{{ fecha_item_prev if fecha_item_prev else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="categoria_principal_id">Categoría Principal:</label>
+            <select id="categoria_principal_id" name="categoria_principal_id" required>
+                <option value="">Seleccione una categoría...</option>
+                {% for cat in categorias %}
+                    <option value="{{ cat.id }}" {% if categoria_prev and categoria_prev|int == cat.id %}selected{% endif %}>{{ cat.nombre_categoria }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <fieldset class="optional-fields-group">
+            <legend>Detalle Específico (Opcional - Seleccione solo uno si aplica)</legend>
+            <div class="form-group">
+                <label for="personal_id">Personal:</label>
+                <select id="personal_id" name="personal_id">
+                    <option value="">Ninguno</option>
+                    {% for p in personal_lista %}
+                        <option value="{{ p.id }}" {% if personal_prev and personal_prev|int == p.id %}selected{% endif %}>{{ p.nombre_completo }} ({{p.documento_identidad}})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="proveedor_servicio_id">Proveedor/Servicio:</label>
+                <select id="proveedor_servicio_id" name="proveedor_servicio_id">
+                    <option value="">Ninguno</option>
+                    {% for prov in proveedores_lista %}
+                        <option value="{{ prov.id }}" {% if proveedor_prev and proveedor_prev|int == prov.id %}selected{% endif %}>{{ prov.nombre_proveedor_servicio }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="concepto_gasto_vario_id">Concepto Vario:</label>
+                <select id="concepto_gasto_vario_id" name="concepto_gasto_vario_id">
+                    <option value="">Ninguno</option>
+                    {% for con in conceptos_lista %}
+                        <option value="{{ con.id }}" {% if concepto_prev and concepto_prev|int == con.id %}selected{% endif %}>{{ con.nombre_concepto }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </fieldset>
+
+        <button type="submit">Guardar Ítem de Gasto</button>
+    </form>
+
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('ver_documento_items', documento_id=documento.id) }}">Cancelar y Volver al Documento</a><br>
+        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
+    </p>
+</body>
+</html>
+{% endblock %}
