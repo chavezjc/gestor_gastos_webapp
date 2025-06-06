@@ -1,65 +1,40 @@
 {% extends "base.html" %}
+
 {% block title %}Agregar Personal - Gestor de Gastos{% endblock %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Añadir Nueva Persona</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-     input[type="text"] { 
-    padding: 8px; 
-    width: 100%; /* Ocupará el ancho disponible */
-    max-width: 400px; /* Pero no más de 400px en pantallas grandes */
-    box-sizing: border-box; 
-    margin-bottom: 10px; /* Espacio extra debajo */
-}
-input[type="checkbox"] { 
-    width: auto; /* Mantiene el tamaño por defecto del checkbox */
-    margin-right: 5px; /* Espacio a la derecha */
-}
-/* También podrías querer estilizar los labels un poco si los campos son 100% width */
-label { 
-    display: block; 
-    margin-bottom: 5px; 
-    font-weight: bold; /* Opcional */
-}
-        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-    </style>
-</head>
-<body>
-    <h1>Añadir Nueva Persona al Staff</h1>
+    <article>
+        <h1 style="text-align: center;">Añadir Nueva Persona al Staff</h1>
 
-    <form method="POST" action="{{ url_for('crear_personal') }}">
-        <div class="form-group">
-            <label for="nombre_completo">Nombre Completo:</label>
-            <input type="text" id="nombre_completo" name="nombre_completo" required>
-        </div>
-        <div class="form-group">
-            <label for="documento_identidad">Documento de Identidad:</label>
-            <input type="text" id="documento_identidad" name="documento_identidad" required>
-        </div>
-        <div class="form-group">
-            <label for="cargo">Cargo (Opcional):</label>
-            <input type="text" id="cargo" name="cargo">
-        </div>
-        <div class="form-group">
-            <input type="checkbox" id="activo" name="activo" value="true" checked>
-            <label for="activo">Activo</label>
-        </div>
-        <button type="submit">Guardar Persona</button>
-    </form>
+        <form method="POST" action="{{ url_for('crear_personal') }}">
+            
+            <div class="grid">
+                <label for="nombre_completo">
+                    Nombre Completo
+                    <input type="text" id="nombre_completo" name="nombre_completo" placeholder="Ej: Juan Pérez" required>
+                </label>
+                <label for="documento_identidad">
+                    Documento de Identidad
+                    <input type="text" id="documento_identidad" name="documento_identidad" placeholder="Ej: 1234567" required>
+                </label>
+            </div>
+            
+            <label for="cargo">
+                Cargo (Opcional)
+                <input type="text" id="cargo" name="cargo" placeholder="Ej: Administrador">
+            </label>
 
-    <p style="margin-top: 20px;">
-        <a href="{{ url_for('listar_personal') }}">Volver al Listado de Personal</a><br>
-        <a href="/">Volver al Inicio</a>
-    </p>
-</body>
-</html>
+            <fieldset>
+                <label for="activo">
+                    <input type="checkbox" id="activo" name="activo" value="true" role="switch" checked>
+                    Activo
+                </label>
+            </fieldset>
+
+            <footer style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+                <a href="{{ url_for('listar_personal') }}" role="button" class="secondary outline">Cancelar</a>
+                <button type="submit">Guardar Persona</button>
+            </footer>
+        </form>
+    </article>
 {% endblock %}

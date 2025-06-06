@@ -1,57 +1,33 @@
 {% extends "base.html" %}
-{% block title %}Editar conceptos - Gestor de Gastos{% endblock %}
+
+{% block title %}Editar Concepto de Gasto - Gestor de Gastos{% endblock %}
 
 {% block content %}
+    <article> <h1 style="text-align: center;">Editar Concepto de Gasto Vario</h1>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Concepto de Gasto</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold;}
-        input[type="text"], textarea { 
-            padding: 8px; 
-            width: 100%; 
-            max-width: 400px; 
-            box-sizing: border-box; 
-            margin-bottom:10px;
-        }
-        textarea { min-height: 80px; }
-        input[type="checkbox"] { 
-            width: auto; 
-            margin-right: 5px;
-        }
-        button { padding: 10px 15px; background-color: #28a745; color: white; border: none; cursor: pointer; } /* Botón verde */
-        button:hover { background-color: #218838; }
-    </style>
-</head>
-<body>
-    <h1>Editar Concepto de Gasto Vario</h1>
+        <form method="POST" action="{{ url_for('editar_concepto', id=concepto.id) }}">
+            <div class="grid"> <label for="nombre_concepto">
+                    Nombre del Concepto
+                    <input type="text" id="nombre_concepto" name="nombre_concepto" value="{{ concepto.nombre_concepto }}" required>
+                </label>
 
-    <form method="POST" action="{{ url_for('editar_concepto', id=concepto.id) }}">
-        <div class="form-group">
-            <label for="nombre_concepto">Nombre del Concepto:</label>
-            <input type="text" id="nombre_concepto" name="nombre_concepto" value="{{ concepto.nombre_concepto }}" required>
-        </div>
-        <div class="form-group">
-            <label for="descripcion_concepto">Descripción del Concepto (Opcional):</label>
-            <textarea id="descripcion_concepto" name="descripcion_concepto" rows="3">{{ concepto.descripcion_concepto if concepto.descripcion_concepto }}</textarea>
-        </div>
-        <div class="form-group">
-            <input type="checkbox" id="activo" name="activo" value="true" {% if concepto.activo %}checked{% endif %}>
-            <label for="activo">Activo</label>
-        </div>
-        <button type="submit">Actualizar Concepto</button>
-    </form>
+                <label for="descripcion_concepto">
+                    Descripción del Concepto (Opcional)
+                    <textarea id="descripcion_concepto" name="descripcion_concepto" rows="3">{{ concepto.descripcion_concepto if concepto.descripcion_concepto }}</textarea>
+                </label>
+            </div>
 
-    <p style="margin-top: 20px;">
-        <a href="{{ url_for('listar_conceptos') }}">Volver al Listado</a><br>
-        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
-    </p>
-</body>
-</html>
+            <fieldset>
+                <label for="activo">
+                    <input type="checkbox" id="activo" name="activo" value="true" role="switch" {% if concepto.activo %}checked{% endif %}>
+                    Activo
+                </label>
+            </fieldset>
+
+            <footer style="display: flex; justify-content: flex-end; gap: 1rem;">
+                <a href="{{ url_for('listar_conceptos') }}" role="button" class="secondary outline">Cancelar</a>
+                <button type="submit">Actualizar Concepto</button>
+            </footer>
+        </form>
+    </article>
 {% endblock %}

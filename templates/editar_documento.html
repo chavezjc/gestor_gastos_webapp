@@ -1,73 +1,59 @@
 {% extends "base.html" %}
+
 {% block title %}Editar Documento - Gestor de Gastos{% endblock %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Documento a Rendir</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold;}
-        input[type="text"], input[type="date"], input[type="number"], select, textarea { 
-            padding: 8px; 
-            width: 100%; 
-            max-width: 400px; 
-            box-sizing: border-box; 
-            margin-bottom:10px;
-        }
-        textarea { min-height: 80px; }
-        button { padding: 10px 15px; background-color: #28a745; color: white; border: none; cursor: pointer; } /* Botón verde */
-        button:hover { background-color: #218838; }
-    </style>
-</head>
-<body>
-    <h1>Editar Documento a Rendir</h1>
+    <article>
+        <h1 style="text-align: center;">Editar Documento a Rendir</h1>
 
-    <form method="POST" action="{{ url_for('editar_documento', id=documento.id) }}">
-        <div class="form-group">
-            <label for="tipo_documento">Tipo de Documento:</label>
-            <select id="tipo_documento" name="tipo_documento" required>
-                <option value="cheque" {% if documento.tipo_documento == 'cheque' %}selected{% endif %}>Cheque</option>
-                <option value="transferencia" {% if documento.tipo_documento == 'transferencia' %}selected{% endif %}>Transferencia</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="numero_documento">Número de Documento/Referencia:</label>
-            <input type="text" id="numero_documento" name="numero_documento" value="{{ documento.numero_documento }}" required>
-        </div>
-        <div class="form-group">
-            <label for="fecha_emision">Fecha de Emisión:</label>
-            <input type="date" id="fecha_emision" name="fecha_emision" value="{{ documento.fecha_emision.strftime('%Y-%m-%d') if documento.fecha_emision else '' }}" required>
-        </div>
-        <div class="form-group">
-            <label for="monto_total_documento">Monto Total del Documento (Opcional):</label>
-            <input type="number" id="monto_total_documento" name="monto_total_documento" step="0.01" min="0" value="{{ documento.monto_total_documento if documento.monto_total_documento is not none else '' }}">
-        </div>
-        <div class="form-group">
-            <label for="descripcion_general">Descripción General (Opcional):</label>
-            <textarea id="descripcion_general" name="descripcion_general" rows="3">{{ documento.descripcion_general if documento.descripcion_general }}</textarea>
-        </div>
-        <div class="form-group">
-            <label for="estado_documento">Estado del Documento:</label>
-            <select id="estado_documento" name="estado_documento" required>
-                <option value="Pendiente" {% if documento.estado_documento == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                <option value="Rendido" {% if documento.estado_documento == 'Rendido' %}selected{% endif %}>Rendido</option>
-                <option value="Parcialmente Rendido" {% if documento.estado_documento == 'Parcialmente Rendido' %}selected{% endif %}>Parcialmente Rendido</option>
-                <option value="Anulado" {% if documento.estado_documento == 'Anulado' %}selected{% endif %}>Anulado</option>
-            </select>
-        </div>
+        <form method="POST" action="{{ url_for('editar_documento', id=documento.id) }}">
+            
+            <div class="grid">
+                <label for="tipo_documento">
+                    Tipo de Documento
+                    <select id="tipo_documento" name="tipo_documento" required>
+                        <option value="cheque" {% if documento.tipo_documento == 'cheque' %}selected{% endif %}>Cheque</option>
+                        <option value="transferencia" {% if documento.tipo_documento == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                    </select>
+                </label>
 
-        <button type="submit">Actualizar Documento</button>
-    </form>
+                <label for="numero_documento">
+                    Número/Referencia
+                    <input type="text" id="numero_documento" name="numero_documento" value="{{ documento.numero_documento }}" required>
+                </label>
+            </div>
 
-    <p style="margin-top: 20px;">
-        <a href="{{ url_for('listar_documentos') }}">Volver al Listado</a><br>
-        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
-    </p>
-</body>
-</html>
+            <div class="grid">
+                <label for="fecha_emision">
+                    Fecha de Emisión
+                    <input type="date" id="fecha_emision" name="fecha_emision" value="{{ documento.fecha_emision.strftime('%Y-%m-%d') if documento.fecha_emision else '' }}" required>
+                </label>
+
+                <label for="monto_total_documento">
+                    Monto Total (Opcional)
+                    <input type="number" id="monto_total_documento" name="monto_total_documento" step="0.01" min="0" value="{{ documento.monto_total_documento if documento.monto_total_documento is not none else '' }}">
+                </label>
+            </div>
+
+            <label for="descripcion_general">
+                Descripción General (Opcional)
+                <textarea id="descripcion_general" name="descripcion_general" rows="3">{{ documento.descripcion_general if documento.descripcion_general }}</textarea>
+            </label>
+            
+            <label for="estado_documento">
+                Estado del Documento
+                <select id="estado_documento" name="estado_documento" required>
+                    <option value="Pendiente" {% if documento.estado_documento == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="Parcialmente Rendido" {% if documento.estado_documento == 'Parcialmente Rendido' %}selected{% endif %}>Parcialmente Rendido</option>
+                    <option value="Rendido" {% if documento.estado_documento == 'Rendido' %}selected{% endif %}>Rendido</option>
+                    <option value="Anulado" {% if documento.estado_documento == 'Anulado' %}selected{% endif %}>Anulado</option>
+                </select>
+            </label>
+            
+            <footer style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+                <a href="{{ url_for('listar_documentos') }}" role="button" class="secondary outline">Cancelar</a>
+                <button type="submit">Actualizar Documento</button>
+            </footer>
+        </form>
+    </article>
 {% endblock %}

@@ -1,120 +1,98 @@
 {% extends "base.html" %}
-{% block title %}Nuevo documento - Gestor de Gastos{% endblock %}
+
+{% block title %}Detalle Documento #{{ documento.numero_documento }} - Gestor de Gastos{% endblock %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle Documento {{ documento.tipo_documento }} #{{ documento.numero_documento }}</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .document-details { margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border: 1px solid #eee; }
-        .document-details p { margin: 5px 0; }
-        table { width: 100%; border-collapse: collapse; margin: 20px auto; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .actions a, .actions button { margin-right: 8px; text-decoration: none; }
-        .actions button { background:none; border:none; padding:0; color:red; text-decoration:underline; cursor:pointer; }
-        .actions a:hover, .actions button:hover { text-decoration: underline; }
-        .nav-links, .add-item-link { text-align: center; margin-top: 20px; }
-        .flashes { list-style-type: none; padding: 0; margin: 1em 0; }
-.flashes li { padding: 0.75em 1.25em; margin-bottom: 1rem; border: 1px solid transparent; border-radius: 0.25rem; }
-.flash-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
-.flash-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
-.flash-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
-.flash-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
-    </style>
-</head>
-<body>
-   <h1>Detalle del Documento a Rendir</h1>
+    
+    <article>
+        <header>
+            <h1 style="text-align: center;">Detalle del Documento a Rendir</h1>
+        </header>
+        
+        <div class="grid">
+            <div><strong>ID Documento:</strong> {{ documento.id }}</div>
+            <div><strong>Tipo:</strong> {{ documento.tipo_documento }}</div>
+            <div><strong>Número:</strong> {{ documento.numero_documento }}</div>
+            <div><strong>Fecha Emisión:</strong> {{ documento.fecha_emision.strftime('%d/%m/%Y') if documento.fecha_emision else 'N/A' }}</div>
+        </div>
+        <div class="grid">
+            <div><strong>Monto Total:</strong> {{ "%.2f"|format(documento.monto_total_documento) if documento.monto_total_documento is not none else 'No especificado' }} bs.</div>
+            <div><strong>Estado:</strong> {{ documento.estado_documento }}</div>
+        </div>
+        {% if documento.descripcion_general %}
+        <p><strong>Descripción General:</strong> {{ documento.descripcion_general }}</p>
+        {% endif %}
+        
+        <footer>
+            <div class="grid">
+                <div><strong>Suma de Ítems:</strong><br>{{ "%.2f"|format(suma_items_registrados) }} bs.</div>
+                <div><strong>Saldo Pendiente:</strong><br>
+                    {% if documento.monto_total_documento is not none %}
+                        {{ "%.2f"|format(saldo_por_rendir) }} bs.
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+        </footer>
+    </article>
 
-    <div class="document-details">
-        <p><strong>ID Documento:</strong> {{ documento.id }}</p>
-        <p><strong>Tipo:</strong> {{ documento.tipo_documento }}</p>
-        <p><strong>Número:</strong> {{ documento.numero_documento }}</p>
-        <p><strong>Fecha Emisión:</strong> {{ documento.fecha_emision.strftime('%d/%m/%Y') if documento.fecha_emision else 'N/A' }}</p>
-        <p><strong>Monto Total Documento:</strong> 
-            <strong style="color: blue;">{{ "%.2f"|format(documento.monto_total_documento) if documento.monto_total_documento is not none else 'No especificado' }} bs.</strong>
-        </p>
-        <p><strong>Descripción General:</strong> {{ documento.descripcion_general if documento.descripcion_general else 'N/A' }}</p>
-        <p><strong>Estado:</strong> {{ documento.estado_documento }}</p>
+    <h2 style="margin-top: 2rem;">Ítems de Gasto Asociados</h2>
 
-        <hr style="margin: 10px 0;">
-        <p><strong>Suma de Ítems Registrados:</strong> 
-            <strong style="color: green;">{{ "%.2f"|format(suma_items_registrados) }} bs.</strong>
-        </p>
-        <p><strong>Saldo Pendiente por Rendir:</strong> 
-            <strong style="color: {% if saldo_por_rendir is not none and saldo_por_rendir < 0 %}red{% elif saldo_por_rendir == 0 and documento.monto_total_documento is not none %}darkgreen{% else %}orange{% endif %};">
-            {% if documento.monto_total_documento is not none %}
-                {{ "%.2f"|format(saldo_por_rendir) }} bs.
-            {% else %}
-                N/A (Monto total del documento no especificado)
-            {% endif %}
-            </strong>
-        </p>
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('crear_item_gasto', documento_id=documento.id) }}" role="button">Agregar Nuevo Ítem de Gasto</a>
     </div>
 
-
-    <h2>Ítems de Gasto Asociados</h2>
-    <div class="add-item-link">
-        <a href="{{ url_for('crear_item_gasto', documento_id=documento.id) }}">Agregar Nuevo Ítem de Gasto a este Documento</a>
-    </div>
-
-    <div style="overflow-x:auto;">
-        {% if items_lista %}
+    {% if items_lista %}
+        <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
-                        <th>ID Ítem</th>
-                        <th>Fecha Ítem</th>
+                        <th>ID</th>
+                        <th>Fecha</th>
                         <th>Descripción</th>
                         <th>Monto</th>
                         <th>Categoría</th>
-                        <th>Beneficiario/Concepto Detallado</th>
+                        <th>Beneficiario/Concepto</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in items_lista %}
                     <tr>
-                        <td>{{ item.id }}</td>
-                        <td>{{ item.fecha_item.strftime('%d/%m/%Y') if item.fecha_item else 'N/A' }}</td>
-                        <td>{{ item.descripcion_item }}</td>
-                        <td>{{ "%.2f"|format(item.monto_item) }} bs.</td>
-                        <td>{{ item.categoria.nombre_categoria if item.categoria else 'N/A' }}</td>
-                        <td>
+                        <td data-label="ID">{{ item.id }}</td>
+                        <td data-label="Fecha">{{ item.fecha_item.strftime('%d/%m/%Y') if item.fecha_item else 'N/A' }}</td>
+                        <td data-label="Descripción">{{ item.descripcion_item }}</td>
+                        <td data-label="Monto">{{ "%.2f"|format(item.monto_item) }} bs.</td>
+                        <td data-label="Categoría">{{ item.categoria.nombre_categoria if item.categoria else 'N/A' }}</td>
+                        <td data-label="Beneficiario">
                             {% if item.persona %}
                                 Personal: {{ item.persona.nombre_completo }}
                             {% elif item.proveedor %}
-                                Proveedor/Servicio: {{ item.proveedor.nombre_proveedor_servicio }}
+                                Prov/Serv: {{ item.proveedor.nombre_proveedor_servicio }}
                             {% elif item.concepto_vario %}
                                 Concepto: {{ item.concepto_vario.nombre_concepto }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </td>
-                        <td class="actions">
-                            <a href="{{ url_for('editar_item_gasto', item_id=item.id) }}">Editar</a> |
-                            <form action="{{ url_for('eliminar_item_gasto', item_id=item.id) }}" method="POST" style="display:inline;">
-                                <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar este ítem?');">Eliminar</button>
-                            </form>
+                        <td class="actions" data-label="Acciones">
+                            <div class="action-buttons-group">
+                                <a href="{{ url_for('editar_item_gasto', item_id=item.id) }}" role="button" class="secondary outline">Editar</a>
+                                <form action="{{ url_for('eliminar_item_gasto', item_id=item.id) }}" method="POST" style="display:inline; margin:0;">
+                                    <button type="submit" class="contrast" onclick="return confirm('¿Estás seguro de que quieres eliminar este ítem?');">Eliminar</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
-                    </tbody>
+                </tbody>
             </table>
-        {% else %}
-            <p>Este documento no tiene ítems de gasto registrados todavía.</p>
-        {% endif %}
-    </div>
+        </div>
+    {% else %}
+        <article>
+            Este documento no tiene ítems de gasto registrados todavía.
+        </article>
+    {% endif %}
 
-    <div class="nav-links">
-        <a href="{{ url_for('listar_documentos') }}">Volver al Listado de Documentos</a><br>
-        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
-    </div>
-</body>
-</html>
 {% endblock %}

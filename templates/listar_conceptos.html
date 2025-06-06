@@ -1,31 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Listado de Conceptos - Gestor de Gastos{% endblock %}
+
+{% block title %}Conceptos de Gasto - Gestor de Gastos{% endblock %}
 
 {% block content %}
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listado de Conceptos de Gasto Varios</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        table { width: 90%; border-collapse: collapse; margin: 20px auto; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .actions a, .actions button { margin-right: 8px; text-decoration: none; }
-        .actions button { background:none; border:none; padding:0; color:red; text-decoration:underline; cursor:pointer; }
-        .actions a:hover, .actions button:hover { text-decoration: underline; }
-        .nav-links { text-align: center; margin-top: 20px; }
-    </style>
-</head>
-<body>
     <h1>Listado de Conceptos de Gasto Varios</h1>
 
-    <div style="overflow-x:auto;"> {% if conceptos_lista %}
-            <table>
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('crear_concepto') }}" role="button">Agregar Nuevo Concepto</a>
+    </div>
+
+    {% if conceptos_lista %}
+        <div style="overflow-x:auto;"> <table>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -38,30 +23,29 @@
                 <tbody>
                     {% for concepto in conceptos_lista %}
                     <tr>
-                        <td>{{ concepto.id }}</td>
-                        <td>{{ concepto.nombre_concepto }}</td>
-                        <td>{{ concepto.descripcion_concepto if concepto.descripcion_concepto else 'N/A' }}</td>
-                        <td>{{ 'Sí' if concepto.activo else 'No' }}</td>
-                        <td class="actions">
-                            <a href="{{ url_for('editar_concepto', id=concepto.id) }}">Editar</a> |
-                            <form action="{{ url_for('eliminar_concepto', id=concepto.id) }}" method="POST" style="display:inline;">
-                                <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar este concepto?');">Eliminar</button>
-                            </form>
+                        <td data-label="ID">{{ concepto.id }}</td>
+                        <td data-label="Nombre">{{ concepto.nombre_concepto }}</td>
+                        <td data-label="Descripción">{{ concepto.descripcion_concepto if concepto.descripcion_concepto else 'N/A' }}</td>
+                        <td data-label="Activo">{{ 'Sí' if concepto.activo else 'No' }}</td>
+                        <td class="actions" data-label="Acciones">
+                            <div class="action-buttons-group">
+                                <a href="{{ url_for('editar_concepto', id=concepto.id) }}" role="button" class="secondary outline">Editar</a>
+                                <form action="{{ url_for('eliminar_concepto', id=concepto.id) }}" method="POST" style="display:inline; margin:0;">
+                                    <button type="submit" class="contrast" onclick="return confirm('¿Estás seguro de que quieres eliminar este concepto?');">Eliminar</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        {% else %}
-            <p>No hay conceptos de gasto varios registrados todavía.</p>
-        {% endif %}
-    </div>
+        </div>
+    {% else %}
+        <article>
+            No hay conceptos de gasto varios registrados todavía.
+            <br><br>
+            <a href="{{ url_for('crear_concepto') }}" role="button">Agregar el primero</a>
+        </article>
+    {% endif %}
 
-    <div class="nav-links">
-        <a href="{{ url_for('crear_concepto') }}">Agregar Nuevo Concepto</a>
-        <br><br>
-        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
-    </div>
-</body>
-</html>
 {% endblock %}

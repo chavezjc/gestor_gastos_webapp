@@ -1,55 +1,36 @@
 {% extends "base.html" %}
-{% block title %}Nuevo - Gestor de Gastos{% endblock %}
+
+{% block title %}Nueva Categoría - Gestor de Gastos{% endblock %}
+
 {% block content %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Añadir Nueva Categoría de Gasto</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold;}
-        input[type="text"], textarea { 
-            padding: 8px; 
-            width: 100%; 
-            max-width: 400px; 
-            box-sizing: border-box; 
-            margin-bottom:10px;
-        }
-        textarea { min-height: 80px; }
-        input[type="checkbox"] { 
-            width: auto; 
-            margin-right: 5px;
-        }
-        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-    </style>
-</head>
-<body>
-    <h1>Añadir Nueva Categoría Principal de Gasto</h1>
+    <article>
+        <h1 style="text-align: center;">Añadir Nueva Categoría Principal de Gasto</h1>
 
-    <form method="POST" action="{{ url_for('crear_categoria') }}">
-        <div class="form-group">
-            <label for="nombre_categoria">Nombre de la Categoría:</label>
-            <input type="text" id="nombre_categoria" name="nombre_categoria" required>
-        </div>
-        <div class="form-group">
-            <label for="descripcion_categoria">Descripción de la Categoría (Opcional):</label>
-            <textarea id="descripcion_categoria" name="descripcion_categoria" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-            <input type="checkbox" id="activa" name="activa" value="true" checked>
-            <label for="activa">Activa</label>
-        </div>
-        <button type="submit">Guardar Categoría</button>
-    </form>
+        <form method="POST" action="{{ url_for('crear_categoria') }}">
+            
+            <div class="grid">
+                <label for="nombre_categoria">
+                    Nombre de la Categoría
+                    <input type="text" id="nombre_categoria" name="nombre_categoria" placeholder="Ej: Servicios Básicos" required>
+                </label>
 
-    <p style="margin-top: 20px;">
-        <a href="{{ url_for('listar_categorias') }}">Volver al Listado</a><br>
-        <a href="{{ url_for('hello_world') }}">Volver al Inicio</a>
-    </p>
-</body>
-</html>
+                <label for="descripcion_categoria">
+                    Descripción (Opcional)
+                    <textarea id="descripcion_categoria" name="descripcion_categoria" rows="3" placeholder="Ej: Incluye gastos de luz, agua, internet..."></textarea>
+                </label>
+            </div>
+
+            <fieldset>
+                <label for="activa">
+                    <input type="checkbox" id="activa" name="activa" value="true" role="switch" checked>
+                    Activa
+                </label>
+            </fieldset>
+
+            <footer style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+                <a href="{{ url_for('listar_categorias') }}" role="button" class="secondary outline">Cancelar</a>
+                <button type="submit">Guardar Categoría</button>
+            </footer>
+        </form>
+    </article>
 {% endblock %}

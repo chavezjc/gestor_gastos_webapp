@@ -1,237 +1,183 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
+<html lang="es" data-theme="light"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
     <title>{% block title %}Gestor de Gastos{% endblock %}</title>
     <style>
-        body { 
-            font-family: sans-serif; 
-            margin: 0; /* Quitamos margen por defecto del body */
-            padding: 0;
-            background-color: #f4f4f4; /* Un color de fondo suave */
+        /* Estilos Globales y de Navegación */
+        :root {
+            --nav-height: 56px; /* Altura de la barra de navegación */
+        }
+        body {
+            padding-top: var(--nav-height); /* Evita que el contenido se oculte detrás del nav fijo */
         }
         nav.main-nav {
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-            display: flex; /* Para alinear items */
-            justify-content: space-between; /* Espacio entre logo/título y links */
+            position: fixed; /* Hacemos que la barra de navegación sea fija */
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+            padding: 0 1rem;
+            height: var(--nav-height);
+            background-color: var(--card-background-color);
+            box-shadow: var(--card-box-shadow);
+            z-index: 100; /* Asegura que esté por encima de todo */
         }
-        nav.main-nav a.nav-brand {
-            color: white;
-            text-decoration: none;
-            font-size: 1.5em;
+        .nav-brand {
             font-weight: bold;
-        }
-        nav.main-nav ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-            display: flex; /* Items del menú en línea */
-        }
-        nav.main-nav ul li {
-            margin-left: 20px; /* Espacio entre items del menú */
-        }
-        nav.main-nav ul li a {
-            color: white;
+            font-size: 1.2rem;
             text-decoration: none;
         }
-        nav.main-nav ul li a:hover {
-            text-decoration: underline;
+        .nav-links-container ul {
+            list-style-type: none; margin: 0; padding: 0; display: flex; align-items: center;
         }
-        .container { /* Contenedor principal para el contenido */
-            padding: 20px;
-            max-width: 1200px; /* Ancho máximo del contenido */
-            margin: 20px auto; /* Centrar el contenido */
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        .nav-links-container ul li {
+             margin-left: 1rem;
         }
-        /* Estilos para mensajes flash (los que ya tenías) */
-        .flashes { list-style-type: none; padding: 0; margin-bottom: 1em; }
-        .flashes li { padding: 0.75em 1.25em; margin-bottom: 1rem; border: 1px solid transparent; border-radius: 0.25rem; }
+        .nav-links-container ul li a {
+            text-decoration: none;
+        }
+
+        /* Estilos para Desplegable en Escritorio */
+        li.dropdown { position: relative; }
+        li.dropdown ul.dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: var(--card-background-color);
+            border: 1px solid var(--card-border-color);
+            min-width: 220px;
+            box-shadow: var(--card-box-shadow);
+            z-index: 1;
+            padding: 0.5rem 0;
+            border-radius: var(--border-radius);
+        }
+        li.dropdown ul.dropdown-content li {
+            margin-left: 0;
+        }
+        li.dropdown ul.dropdown-content li a {
+            display: block;
+            padding: 0.5rem 1rem;
+        }
+        li.dropdown:hover > ul.dropdown-content {
+            display: block;
+        }
+
+        /* Estilos para Mensajes Flash */
+        .flashes { list-style-type: none; padding: 0; margin-top: 1rem; }
+        .flashes li { padding: 0.75em 1.25em; margin-bottom: 1rem; border: 1px solid transparent; border-radius: var(--border-radius); }
         .flash-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
         .flash-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
-        /* Estilos comunes para tablas y formularios (puedes moverlos aquí desde tus otras plantillas) */
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f0f0f0; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold;}
-        input[type="text"], input[type="date"], input[type="number"], select, textarea { 
-            padding: 8px; 
-            width: 100%; 
-            max-width: 400px; 
-            box-sizing: border-box; 
-            margin-bottom:10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        .flash-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+        .flash-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+
+        /* Estilos para el Botón Hamburguesa (oculto en escritorio) */
+        .hamburger-button { display: none; }
+
+        /* --- INICIO: Media Query para PANTALLAS PEQUEÑAS (Móviles) --- */
+        @media screen and (max-width: 768px) {
+            /* Menú Hamburguesa */
+            .hamburger-button {
+                display: block;
+                background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--primary);
+            }
+            .nav-links-container {
+                display: none;
+                position: absolute;
+                top: var(--nav-height);
+                left: 0;
+                width: 100%;
+                background-color: var(--card-background-color);
+                box-shadow: var(--card-box-shadow);
+            }
+            .nav-links-container.active { display: block; }
+            .nav-links-container ul { flex-direction: column; width: 100%; align-items: flex-start; }
+            .nav-links-container ul li { width: 100%; padding: 0; border-bottom: 1px solid var(--card-border-color); }
+            .nav-links-container ul li a { padding: 1rem; }
+            li.dropdown:hover > ul.dropdown-content { display: none; }
+            li.dropdown ul.dropdown-content.active-dropdown {
+                display: block; position: static; box-shadow: none; border: none; background-color: var(--code-background-color); padding-left: 1rem;
+            }
+            li.dropdown ul.dropdown-content li { border-bottom: none; border-top: 1px solid var(--card-border-color); }
+            
+            /* Tablas Responsivas -> Tarjetas */
+            table thead {
+                border: none; clip: rect(0 0 0 0); height: 1px; margin: -1px;
+                overflow: hidden; padding: 0; position: absolute; width: 1px;
+            }
+            table, thead, tbody, th, td, tr { display: block; }
+
+            table tr {
+                margin-bottom: 1.5em;
+                border: 1px solid var(--card-border-color);
+                border-radius: var(--border-radius);
+                box-shadow: var(--card-box-shadow);
+                background-color: var(--card-background-color);
+            }
+            table td {
+                display: block;
+                text-align: right;
+                border-bottom: 1px solid var(--card-border-color);
+                padding: 1rem;
+            }
+            table td::before {
+                content: attr(data-label);
+                float: left;
+                font-weight: bold;
+                text-transform: uppercase;
+                color: var(--muted-color);
+            }
+            /* Encabezado de la Tarjeta (primera celda) */
+            table tr td:first-child {
+                background-color: #435160; /* Gris oscuro/azulado */
+                color: white;
+                text-align: center;
+                font-size: 1.25em;
+                font-weight: bold;
+                padding: 0.75rem;
+            }
+            table tr td:first-child::before { content: ""; } /* Ocultar etiqueta "ID:" */
+            
+            /* Celda de Acciones */
+            table td.actions { border-bottom: none; }
+            .action-buttons-group {
+                display: flex;
+                flex-wrap: wrap; /* Permite que los botones pasen a la siguiente línea si no caben */
+                justify-content: center; /* Centra los botones en móvil */
+                gap: 0.5rem;
+            }
         }
-        input[type="checkbox"] { width: auto; margin-right: 5px;}
-        textarea { min-height: 80px; }
-        button[type="submit"], .button-link { 
-            padding: 10px 15px; 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            border-radius: 4px;
-            text-decoration: none; /* Para que los .button-link no estén subrayados */
-            display: inline-block; /* Para que los .button-link se comporten como botones */
-        }
-        button[type="submit"] { background-color: #007bff; }
-        button[type="submit"]:hover { background-color: #0056b3; }
-        .button-link.add { background-color: #28a745; } /* Botón verde para añadir */
-        .button-link.add:hover { background-color: #218838; }
-        .actions a, .actions button { margin-right: 8px; text-decoration: none; }
-        .actions button { background:none; border:none; padding:0; color:red; text-decoration:underline; cursor:pointer; }
-
-/* ... (tus estilos existentes para body, nav.main-nav, .container, etc.) ... */
-
-/* Estilos para el menú desplegable de Configuración */
-nav.main-nav ul li.dropdown {
-    position: relative; /* Necesario para posicionar el contenido del desplegable */
-    display: inline-block; /* Para que se comporte bien con otros <li> */
-}
-
-nav.main-nav ul li.dropdown .dropdown-content {
-    display: none; /* Oculto por defecto */
-    position: absolute;
-    background-color: #333; /* Mismo color que la barra o uno que contraste */
-    min-width: 200px; /* Ancho mínimo del desplegable */
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1; /* Para que aparezca por encima de otro contenido */
-    border-radius: 0 0 4px 4px; /* Bordes redondeados abajo */
-}
-
-nav.main-nav ul li.dropdown .dropdown-content li {
-    width: 100%; /* Que los items ocupen todo el ancho del desplegable */
-    margin-left: 0; /* Quitamos el margen que tenían los <li> principales */
-}
-
-nav.main-nav ul li.dropdown .dropdown-content li a {
-    color: white;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block; /* Para que cada enlace ocupe toda la línea */
-    text-align: left;
-}
-
-nav.main-nav ul li.dropdown .dropdown-content li a:hover {
-    background-color: #555; /* Color al pasar el mouse */
-    text-decoration: none; /* Mantenemos sin subrayado */
-}
-
-/* Mostrar el contenido del desplegable cuando se pasa el mouse sobre el <li> padre */
-nav.main-nav ul li.dropdown:hover .dropdown-content {
-    display: block;
-}
-
-/* ... (tus estilos existentes) ... */
-
-/* Estilos para el botón hamburguesa */
-.hamburger-button {
-    display: none; /* Oculto en pantallas grandes por defecto */
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.8em; /* Tamaño del icono hamburguesa */
-    cursor: pointer;
-    padding: 0 10px;
-}
-
-/* Estilos para el contenedor de enlaces del menú */
-.nav-links-container {
-    display: flex; /* Por defecto en escritorio, se muestra flex */
-}
-
-/* --- Media Query para Móviles --- */
-@media screen and (max-width: 768px) { /* Ajusta este valor según necesites */
-    nav.main-nav {
-        flex-wrap: wrap; /* Permitir que el botón y la marca se ajusten */
-    }
-
-    .hamburger-button {
-        display: block; /* Mostrar el botón hamburguesa en pantallas pequeñas */
-        order: 1; /* Para que aparezca después del brand si es necesario, o ajusta el orden */
-        margin-left: auto; /* Empuja el botón a la derecha */
-    }
-
-    .nav-links-container {
-        display: none; /* Ocultar los enlaces por defecto en móviles */
-        width: 100%; /* Ocupar todo el ancho cuando se muestre */
-        order: 3; /* Para que aparezca debajo del brand y el botón */
-    }
-
-    .nav-links-container.active { /* Clase que añadiremos con JS para mostrar el menú */
-        display: block; 
-    }
-
-    nav.main-nav ul {
-        flex-direction: column; /* Enlaces en columna en móviles */
-        width: 100%;
-    }
-
-    nav.main-nav ul li {
-        margin-left: 0;
-        text-align: center; /* Centrar texto de enlaces */
-        width: 100%;
-        border-top: 1px solid #444; /* Separador entre items */
-    }
-    nav.main-nav ul li:first-child {
-        border-top: none;
-    }
-    nav.main-nav ul li a { /* Estilo para enlaces en móvil */
-        padding: 15px 0;
-        display: block; /* Que ocupen todo el espacio del li */
-    }
-
-    /* Ajustes para el desplegable de Configuración en móviles */
-    nav.main-nav ul li.dropdown .dropdown-content {
-        position: static; /* Quitar posicionamiento absoluto en móviles */
-        display: none; /* Oculto por defecto también en móvil, JS lo manejará */
-        background-color: #444; /* Un fondo ligeramente diferente para el submenú */
-        box-shadow: none;
-        border-radius: 0;
-    }
-    
-    nav.main-nav ul li.dropdown .dropdown-content.active-dropdown { /* Clase para mostrar submenú con JS */
-        display: block;
-    }
-
-    nav.main-nav ul li.dropdown .dropdown-content li a {
-        padding: 10px 0 10px 30px; /* Indentación para sub-items */
-        text-align: center; /* O left si prefieres */
-        font-size: 0.9em;
-    }
-}
-
+        /* --- FIN: Media Query --- */
     </style>
 </head>
-<body>
-    <nav class="main-nav">
-    <a href="{{ url_for('hello_world') }}" class="nav-brand">Gestor Gastos</a>
-
-    <button class="hamburger-button" id="hamburgerButton" aria-label="Abrir menú" aria-expanded="false">
-        &#9776; </button>
-
-    <div class="nav-links-container" id="navLinksContainer">
-        <ul>
-            <li><a href="{{ url_for('listar_documentos') }}">Documentos a Rendir</a></li>
-            <li class="dropdown">
-                <a href="#" class="dropbtn" onclick="toggleConfigMenu(event)">Configuración &#9662;</a> 
-                <ul class="dropdown-content" id="configDropdown">
-                    <li><a href="{{ url_for('listar_personal') }}">Personal</a></li>
-                    <li><a href="{{ url_for('listar_proveedores') }}">Proveedores/Servicios</a></li>
-                    <li><a href="{{ url_for('listar_conceptos') }}">Conceptos Varios</a></li>
-                    <li><a href="{{ url_for('listar_categorias') }}">Categorías</a></li>
+<body >
+    <main class="container">
+        <nav class="main-nav">
+            <a href="{{ url_for('hello_world') }}" class="nav-brand">Gestor Gastos</a>
+            
+            <button class="hamburger-button" id="hamburgerButton" aria-label="Abrir menú" aria-expanded="false">
+                &#9776; </button>
+    
+            <div class="nav-links-container" id="navLinksContainer">
+                <ul>
+                    <li><a href="{{ url_for('listar_documentos') }}">Documentos a Rendir</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropbtn" onclick="toggleConfigMenu(event)">Configuración &#9662;</a>
+                        <ul class="dropdown-content" id="configDropdown">
+                            <li><a href="{{ url_for('listar_personal') }}">Personal</a></li>
+                            <li><a href="{{ url_for('listar_proveedores') }}">Proveedores/Servicios</a></li>
+                            <li><a href="{{ url_for('listar_conceptos') }}">Conceptos Varios</a></li>
+                            <li><a href="{{ url_for('listar_categorias') }}">Categorías</a></li>
+                        </ul>
+                    </li>
                 </ul>
-            </li>
-            </ul>
-    </div>
-</nav>
-    <div class="container">
+            </div>
+        </nav>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             <ul class="flashes">
@@ -242,44 +188,36 @@ nav.main-nav ul li.dropdown:hover .dropdown-content {
           {% endif %}
         {% endwith %}
 
-        {% block content %}
-        {% endblock %}
-    </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const hamburgerButton = document.getElementById('hamburgerButton');
-        const navLinksContainer = document.getElementById('navLinksContainer');
-        const configDropbtn = document.querySelector('.dropdown .dropbtn'); // Botón de Configuración
-        const configDropdownContent = document.getElementById('configDropdown'); // Contenido del desplegable Configuración
+        {% block content %}{% endblock %}
 
-        if (hamburgerButton && navLinksContainer) {
-            hamburgerButton.addEventListener('click', function() {
-                navLinksContainer.classList.toggle('active');
-                // Actualizar aria-expanded
-                const isExpanded = navLinksContainer.classList.contains('active');
-                hamburgerButton.setAttribute('aria-expanded', isExpanded);
-                // Si el menú principal se cierra, también cerramos el submenú de config
-                if (!isExpanded && configDropdownContent) {
-                    configDropdownContent.classList.remove('active-dropdown');
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const hamburgerButton = document.getElementById('hamburgerButton');
+            const navLinksContainer = document.getElementById('navLinksContainer');
+            const configDropdownContent = document.getElementById('configDropdown');
+    
+            if (hamburgerButton && navLinksContainer) {
+                hamburgerButton.addEventListener('click', function() {
+                    navLinksContainer.classList.toggle('active');
+                    const isExpanded = navLinksContainer.classList.contains('active');
+                    hamburgerButton.setAttribute('aria-expanded', isExpanded);
+                    if (!isExpanded && configDropdownContent) {
+                        configDropdownContent.classList.remove('active-dropdown');
+                    }
+                });
+            }
+    
+            window.toggleConfigMenu = function(event) {
+                if (window.getComputedStyle(hamburgerButton).display !== 'none') {
+                     event.preventDefault();
                 }
-            });
-        }
-
-        // Función para el desplegable de Configuración (usada en el onclick)
-        window.toggleConfigMenu = function(event) {
-            // Solo prevenir default si es un enlace #, si tiene URL real, permitirla si no estamos en modo "hamburguesa activa"
-            // Para simplificar, siempre prevenimos si el menú hamburguesa es visible
-            if (window.getComputedStyle(hamburgerButton).display !== 'none') { // Si el botón hamburguesa está visible (móvil)
-                 event.preventDefault(); // Prevenir navegación si es un enlace '#'
+                if (configDropdownContent) {
+                    configDropdownContent.classList.toggle('active-dropdown');
+                }
             }
-            if (configDropdownContent) {
-                configDropdownContent.classList.toggle('active-dropdown');
-            }
-        }
-        
-        // Opcional: Cerrar el menú hamburguesa si se hace clic fuera de él o en un enlace (más avanzado)
-        // Por ahora, lo dejamos así para mantenerlo simple.
-    });
-</script>
+        });
+    </script>
 </body>
 </html>

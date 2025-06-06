@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
+from sqlalchemy import or_ # <--- AÑADE O ASEGÚRATE DE QUE ESTA LÍNEA ESTÉ PRESENTE
 
 # 1. Crear una instancia de la aplicación Flask
 app = Flask(__name__)
@@ -134,10 +135,36 @@ def actualizar_estado_documento(documento_id_a_actualizar):
             flash(f"Error al intentar actualizar estado del documento: {str(e)}", "danger")
 
 # 5. --- Definiciones de Rutas ---
+# Dentro de app.py
+# Dentro de la función hello_world en app.py
+# Dentro de app.py
+
 @app.route('/')
 def hello_world():
-    return render_template('index.html')
+    # 1. Obtener la lista de documentos que están 'Pendiente' O 'Parcialmente Rendido'
+    documentos_por_rendir = DocumentosARendir.query.filter(
+        or_(
+            DocumentosARendir.estado_documento == 'Pendiente',
+            DocumentosARendir.estado_documento == 'Parcialmente Rendido'
+        )
+    ).order_by(DocumentosARendir.fecha_emision.asc()).all() # Ordenamos por los más antiguos primero
 
+    # 2. Contar cuántos son
+    num_docs_por_rendir = len(documentos_por_rendir)
+
+    # 3. Calcular la suma de todos los saldos pendientes
+    total_saldo_por_rendir = Decimal(0)
+    for doc in documentos_por_rendir:
+        if doc.monto_total_documento is not None:
+            suma_items = sum(item.monto_item for item in doc.items if item.monto_item is not None)
+            saldo_individual = doc.monto_total_documento - suma_items
+            total_saldo_por_rendir += saldo_individual
+
+    # Pasamos los nuevos datos a la plantilla
+    return render_template('index.html', 
+                           num_por_rendir=num_docs_por_rendir,
+                           saldo_total_por_rendir=total_saldo_por_rendir,
+                           documentos_a_revisar=documentos_por_rendir)
 # --- CRUD Personal ---
 @app.route('/personal')
 def listar_personal():
@@ -473,7 +500,7 @@ def crear_item_gasto(documento_id):
     lista_personal = Personal.query.filter_by(activo=True).order_by(Personal.nombre_completo).all()
     lista_proveedores = ProveedoresServicios.query.filter_by(activo=True).order_by(ProveedoresServicios.nombre_proveedor_servicio).all()
     lista_conceptos = ConceptosGastoVarios.query.filter_by(activo=True).order_by(ConceptosGastoVarios.nombre_concepto).all()
-
+    
     # Cálculo de saldos para mostrar en el formulario
     suma_items_existentes = sum(item.monto_item for item in documento.items if item.monto_item is not None)
     saldo_a_rendir = None
@@ -492,7 +519,6 @@ def crear_item_gasto(documento_id):
     }
 
     if request.method == 'POST':
-        # Datos del formulario para re-renderizar en caso de error
         form_data_prev = {
             'descripcion_item_prev': request.form.get('descripcion_item'),
             'monto_item_prev': request.form.get('monto_item'),
@@ -504,48 +530,51 @@ def crear_item_gasto(documento_id):
         }
         current_template_context = {**template_context_base, **form_data_prev}
 
+        # --- INICIO DE LA NUEVA VALIDACIÓN ---
+        opcionales_seleccionados = [val for val in [form_data_prev['personal_prev'], form_data_prev['proveedor_prev'], form_data_prev['concepto_prev']] if val]
+        if len(opcionales_seleccionados) > 1:
+            flash('Error: Solo puede seleccionar UN detalle específico (Personal, Proveedor/Servicio, o Concepto Vario), no múltiples.', 'danger')
+            return render_template('nuevo_item_gasto.html', **current_template_context)
+        # --- FIN DE LA NUEVA VALIDACIÓN ---
+
         try:
             fecha_item_obj = datetime.strptime(request.form['fecha_item'], '%Y-%m-%d').date()
-        except ValueError:
-            flash("Error en el formato de fecha del ítem. Use YYYY-MM-DD.", 'danger')
-            return render_template('nuevo_item_gasto.html', **current_template_context)
-        
-        monto_nuevo_item_decimal = None
-        try:
             monto_nuevo_item_decimal = Decimal(request.form['monto_item'])
             if monto_nuevo_item_decimal <= 0:
                 flash("El monto del ítem debe ser un número positivo.", 'danger')
                 return render_template('nuevo_item_gasto.html', **current_template_context)
-        except InvalidOperation:
-            flash("Error en el formato del monto del ítem.", 'danger')
-            return render_template('nuevo_item_gasto.html', **current_template_context)
-
-        categoria_id_form = request.form.get('categoria_principal_id')
-        if not categoria_id_form or not categoria_id_form.isdigit(): # Asegurarse que no es "" y es un digito
-            flash("Debe seleccionar una categoría principal válida.", 'danger')
-            return render_template('nuevo_item_gasto.html', **current_template_context)
-
-        if documento.monto_total_documento is not None:
-            if (suma_items_existentes + monto_nuevo_item_decimal) > documento.monto_total_documento:
-                flash(f'Error: El monto del nuevo ítem ({monto_nuevo_item_decimal:.2f} bs) haría que la suma total ({suma_items_existentes + monto_nuevo_item_decimal:.2f} bs) exceda el monto del documento ({documento.monto_total_documento:.2f} bs).', 'danger')
+            categoria_id_form = request.form.get('categoria_principal_id')
+            if not categoria_id_form or not categoria_id_form.isdigit():
+                flash("Debe seleccionar una categoría principal válida.", 'danger')
                 return render_template('nuevo_item_gasto.html', **current_template_context)
-        
-        try:
+
+            if documento.monto_total_documento is not None:
+                if (suma_items_existentes + monto_nuevo_item_decimal) > documento.monto_total_documento:
+                    flash(f'Error: El monto del nuevo ítem ({monto_nuevo_item_decimal:.2f} bs) haría que la suma exceda el monto del documento ({documento.monto_total_documento:.2f} bs).', 'danger')
+                    return render_template('nuevo_item_gasto.html', **current_template_context)
+            
             nuevo_item = ItemsGasto(
                 documento_id=documento.id,
                 categoria_principal_id=int(categoria_id_form),
                 descripcion_item=request.form['descripcion_item'],
                 monto_item=monto_nuevo_item_decimal,
                 fecha_item=fecha_item_obj,
-                personal_id=int(request.form.get('personal_id')) if request.form.get('personal_id') and request.form.get('personal_id').isdigit() else None,
-                proveedor_servicio_id=int(request.form.get('proveedor_servicio_id')) if request.form.get('proveedor_servicio_id') and request.form.get('proveedor_servicio_id').isdigit() else None,
-                concepto_gasto_vario_id=int(request.form.get('concepto_gasto_vario_id')) if request.form.get('concepto_gasto_vario_id') and request.form.get('concepto_gasto_vario_id').isdigit() else None
+                personal_id=int(form_data_prev['personal_prev']) if form_data_prev['personal_prev'] and form_data_prev['personal_prev'].isdigit() else None,
+                proveedor_servicio_id=int(form_data_prev['proveedor_prev']) if form_data_prev['proveedor_prev'] and form_data_prev['proveedor_prev'].isdigit() else None,
+                concepto_gasto_vario_id=int(form_data_prev['concepto_prev']) if form_data_prev['concepto_prev'] and form_data_prev['concepto_prev'].isdigit() else None
             )
             db.session.add(nuevo_item)
             db.session.commit()
             actualizar_estado_documento(documento.id)
             flash('Ítem de gasto añadido exitosamente!', 'success')
             return redirect(url_for('ver_documento_items', documento_id=documento.id))
+        
+        except InvalidOperation:
+            flash("Error en el formato del monto del ítem.", 'danger')
+            return render_template('nuevo_item_gasto.html', **current_template_context)
+        except ValueError:
+            flash("Error en el formato de fecha del ítem. Use YYYY-MM-DD.", 'danger')
+            return render_template('nuevo_item_gasto.html', **current_template_context)
         except Exception as e:
             db.session.rollback()
             flash(f'Error al guardar el ítem de gasto: {str(e)}', 'danger')
@@ -561,7 +590,6 @@ def editar_item_gasto(item_id):
     item_a_editar = ItemsGasto.query.get_or_404(item_id)
     documento_padre = item_a_editar.documento
     
-    # Datos para los desplegables, comunes para GET y re-render en POST error
     categorias = CategoriasGastoPrincipales.query.filter_by(activa=True).order_by(CategoriasGastoPrincipales.nombre_categoria).all()
     lista_personal = Personal.query.filter_by(activo=True).order_by(Personal.nombre_completo).all()
     lista_proveedores = ProveedoresServicios.query.filter_by(activo=True).order_by(ProveedoresServicios.nombre_proveedor_servicio).all()
@@ -569,7 +597,7 @@ def editar_item_gasto(item_id):
 
     template_context_base_edit = {
         'item': item_a_editar,
-        'documento_id': documento_padre.id, # Para el enlace "Cancelar"
+        'documento_id': documento_padre.id,
         'categorias': categorias,
         'personal_lista': lista_personal,
         'proveedores_lista': lista_proveedores,
@@ -577,74 +605,44 @@ def editar_item_gasto(item_id):
     }
 
     if request.method == 'POST':
-        # Capturar los datos del formulario para re-poblar en caso de error
-        form_data_item = {
-            'descripcion_item': request.form.get('descripcion_item'),
-            'monto_item': request.form.get('monto_item'),
-            'fecha_item': request.form.get('fecha_item'),
-            'categoria_principal_id': request.form.get('categoria_principal_id'),
-            'personal_id': request.form.get('personal_id'),
-            'proveedor_servicio_id': request.form.get('proveedor_servicio_id'),
-            'concepto_gasto_vario_id': request.form.get('concepto_gasto_vario_id')
-        }
-        # Construir el contexto para re-renderizar la plantilla en caso de error
-        # Se actualiza item_a_editar con los valores del form para que el template los muestre
-        # Esto es si quieres que los campos reflejen lo que el usuario intentó guardar, no los valores originales.
-        temp_item_for_render_on_error = ItemsGasto(**form_data_item) # Crea un objeto temporal con los datos del form
-        # Necesita id para url_for, y las relaciones no se setean asi.
-        # Es mejor actualizar el item_a_editar directamente y pasarlo.
-        # Para re-poblar, es mejor pasar los valores del form directamente al template.
-        # O actualizar el objeto item_a_editar con los nuevos valores ANTES de las validaciones
-        # y pasarlo al template si la validación falla.
+        personal_id_str = request.form.get('personal_id')
+        proveedor_id_str = request.form.get('proveedor_servicio_id')
+        concepto_id_str = request.form.get('concepto_gasto_vario_id')
 
-        try:
-            fecha_item_obj = datetime.strptime(form_data_item['fecha_item'], '%Y-%m-%d').date()
-        except ValueError:
-            flash("Error en el formato de fecha del ítem. Use YYYY-MM-DD.", 'danger')
-            return render_template('editar_item_gasto.html', **template_context_base_edit, form_data=form_data_item)
-
-        nuevo_monto_item_decimal = None
-        try:
-            nuevo_monto_item_decimal = Decimal(form_data_item['monto_item'])
-            if nuevo_monto_item_decimal <= 0:
-                flash("El monto del ítem debe ser un número positivo.", 'danger')
-                return render_template('editar_item_gasto.html', **template_context_base_edit, form_data=form_data_item)
-        except InvalidOperation:
-            flash("Error en el formato del monto del ítem.", 'danger')
-            return render_template('editar_item_gasto.html', **template_context_base_edit, form_data=form_data_item)
-        
-        categoria_id_form = form_data_item['categoria_principal_id']
-        if not categoria_id_form or not categoria_id_form.isdigit():
-            flash("Debe seleccionar una categoría principal válida.", 'danger')
-            return render_template('editar_item_gasto.html', **template_context_base_edit, form_data=form_data_item)
-
-        if documento_padre.monto_total_documento is not None:
-            suma_otros_items = sum(item.monto_item for item in documento_padre.items if item.id != item_a_editar.id and item.monto_item is not None)
-            if (suma_otros_items + nuevo_monto_item_decimal) > documento_padre.monto_total_documento:
-                flash(f'Error: El nuevo monto del ítem ({nuevo_monto_item_decimal:.2f} bs) haría que la suma total ({suma_otros_items + nuevo_monto_item_decimal:.2f} bs) exceda el monto del documento ({documento_padre.monto_total_documento:.2f} bs).', 'danger')
-                return render_template('editar_item_gasto.html', **template_context_base_edit, form_data=form_data_item)
+        # --- INICIO DE LA NUEVA VALIDACIÓN ---
+        opcionales_seleccionados = [val for val in [personal_id_str, proveedor_id_str, concepto_id_str] if val]
+        if len(opcionales_seleccionados) > 1:
+            flash('Error: Solo puede seleccionar UN detalle específico (Personal, Proveedor/Servicio, o Concepto Vario), no múltiples.', 'danger')
+            return render_template('editar_item_gasto.html', **template_context_base_edit)
+        # --- FIN DE LA NUEVA VALIDACIÓN ---
         
         try:
-            item_a_editar.descripcion_item = form_data_item['descripcion_item']
+            nuevo_monto_item_decimal = Decimal(request.form['monto_item'])
+            
+            if documento_padre.monto_total_documento is not None:
+                suma_otros_items = sum(item.monto_item for item in documento_padre.items if item.id != item_a_editar.id and item.monto_item is not None)
+                if (suma_otros_items + nuevo_monto_item_decimal) > documento_padre.monto_total_documento:
+                    flash(f'Error: El nuevo monto del ítem ({nuevo_monto_item_decimal:.2f} bs) haría que la suma exceda el monto del documento ({documento_padre.monto_total_documento:.2f} bs).', 'danger')
+                    return render_template('editar_item_gasto.html', **template_context_base_edit)
+            
+            item_a_editar.descripcion_item = request.form['descripcion_item']
             item_a_editar.monto_item = nuevo_monto_item_decimal
-            item_a_editar.fecha_item = fecha_item_obj
-            item_a_editar.categoria_principal_id = int(categoria_id_form)
-            item_a_editar.personal_id = int(form_data_item['personal_id']) if form_data_item['personal_id'] and form_data_item['personal_id'].isdigit() else None
-            item_a_editar.proveedor_servicio_id = int(form_data_item['proveedor_servicio_id']) if form_data_item['proveedor_servicio_id'] and form_data_item['proveedor_servicio_id'].isdigit() else None
-            item_a_editar.concepto_gasto_vario_id = int(form_data_item['concepto_gasto_vario_id']) if form_data_item['concepto_gasto_vario_id'] and form_data_item['concepto_gasto_vario_id'].isdigit() else None
+            item_a_editar.fecha_item = datetime.strptime(request.form['fecha_item'], '%Y-%m-%d').date()
+            item_a_editar.categoria_principal_id = int(request.form.get('categoria_principal_id'))
+            item_a_editar.personal_id = int(personal_id_str) if personal_id_str and personal_id_str.isdigit() else None
+            item_a_editar.proveedor_servicio_id = int(proveedor_id_str) if proveedor_id_str and proveedor_id_str.isdigit() else None
+            item_a_editar.concepto_gasto_vario_id = int(concepto_id_str) if concepto_id_str and concepto_id_str.isdigit() else None
             
             db.session.commit()
             actualizar_estado_documento(documento_padre.id)
             flash('Ítem de gasto actualizado exitosamente!', 'success')
             return redirect(url_for('ver_documento_items', documento_id=documento_padre.id))
+        
         except Exception as e:
             db.session.rollback()
             flash(f'Error al actualizar el ítem de gasto: {str(e)}', 'danger')
-            return render_template('editar_item_gasto.html', **template_context_base_edit, form_data=form_data_item)
-
-    # Si es GET
+    
     return render_template('editar_item_gasto.html', **template_context_base_edit)
-
 
 @app.route('/item/eliminar/<int:item_id>', methods=['POST'])
 def eliminar_item_gasto(item_id):
