@@ -658,6 +658,56 @@ def eliminar_item_gasto(item_id):
         flash(f'Error al eliminar el ítem de gasto: {str(e)}', 'danger')
     return redirect(url_for('ver_documento_items', documento_id=documento_id_padre))
 
-# 6. Bloque para ejecutar la aplicación
+# 6. Bloque para ejecutar la aplicació
+# # Dentro de app.py, junto con tus otras rutas
+
+# --- Ruta para el Informe de Gastos por Categoría ---
+# Dentro de app.py
+
+@app.route('/informes/gastos_por_categoria', methods=['GET', 'POST'])
+def informe_gastos_por_categoria():
+    if request.method == 'POST':
+        # Obtener fechas del formulario
+        fecha_inicio_str = request.form.get('fecha_inicio')
+        fecha_fin_str = request.form.get('fecha_fin')
+
+        # Convertir las fechas de texto a objetos de fecha
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            flash('Fechas inválidas. Por favor, seleccione un rango de fechas.', 'danger')
+            return render_template('informe_gastos_por_categoria.html', resultados=None)
+
+        # --- La Consulta a la Base de Datos ---
+        # Seleccionamos el nombre de la categoría y la suma de los montos de los ítems
+        # y le ponemos una etiqueta 'total_gastado' a la suma para fácil acceso.
+        resultados = db.session.query(
+            CategoriasGastoPrincipales.nombre_categoria,
+            func.sum(ItemsGasto.monto_item).label('total_gastado')
+        ).join( # Unimos la tabla de Ítems con la de Categorías
+            ItemsGasto, CategoriasGastoPrincipales.id == ItemsGasto.categoria_principal_id
+        ).filter( # Filtramos los ítems que están dentro del rango de fechas
+            ItemsGasto.fecha_item.between(fecha_inicio, fecha_fin)
+        ).group_by( # Agrupamos los resultados por el nombre de la categoría
+            CategoriasGastoPrincipales.nombre_categoria
+        ).order_by( # Ordenamos de mayor a menor gasto
+            func.sum(ItemsGasto.monto_item).desc()
+        ).all()
+        # --- Fin de la Consulta ---
+
+        # Calculamos el total general del informe
+        total_informe = sum(res.total_gastado for res in resultados)
+
+        # Pasamos los resultados y las fechas de vuelta a la plantilla para mostrarlos
+        return render_template('informe_gastos_por_categoria.html', 
+                               resultados=resultados, 
+                               fecha_inicio=fecha_inicio_str, 
+                               fecha_fin=fecha_fin_str,
+                               total_informe=total_informe)
+
+    # Si es GET, simplemente mostrar el formulario sin resultados
+    return render_template('informe_gastos_por_categoria.html', resultados=None)
+# --- Fin Ruta para Informe ---n
 if __name__ == '__main__':
     app.run(debug=True)

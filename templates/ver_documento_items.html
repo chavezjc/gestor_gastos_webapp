@@ -94,5 +94,38 @@
             Este documento no tiene ítems de gasto registrados todavía.
         </article>
     {% endif %}
+<script>
+        // Espera a que todo el contenido de la página se cargue
+        document.addEventListener('DOMContentLoaded', function() {
 
+            // 1. Seleccionamos los tres menús desplegables por su clase común
+            const selects = document.querySelectorAll('.detalle-especifico-select');
+
+            // 2. Definimos la función que manejará el cambio
+            function manejarCambioDeSelect(evento) {
+                // 'evento.target' es el <select> que el usuario acaba de cambiar
+                const selectActual = evento.target;
+
+                // Verificamos si el valor seleccionado NO está vacío (es decir, no es "Ninguno")
+                const haySeleccion = selectActual.value !== '';
+
+                // 3. Recorremos TODOS los desplegables de nuevo
+                selects.forEach(function(otroSelect) {
+                    // Si este desplegable NO es el que el usuario cambió...
+                    if (otroSelect !== selectActual) {
+                        // ...lo deshabilitamos si el usuario hizo una selección,
+                        // o lo habilitamos si el usuario seleccionó "Ninguno".
+                        otroSelect.disabled = haySeleccion;
+                    }
+                });
+            }
+
+            // 4. Añadimos un "escuchador de eventos" a cada desplegable.
+            // Cada vez que uno de ellos cambie, se ejecutará nuestra función 'manejarCambioDeSelect'.
+            selects.forEach(function(select) {
+                select.addEventListener('change', manejarCambioDeSelect);
+            });
+
+        });
+    </script>
 {% endblock %}

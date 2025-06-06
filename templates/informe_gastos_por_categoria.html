@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Informe de Gastos por Categoría - Gestor de Gastos{% endblock %}
+
+{% block content %}
+<article>
+    <h1 style="text-align: center;">Informe de Gastos por Categoría</h1>
+    <p>Seleccione un rango de fechas para generar el informe de gastos agrupados por categoría principal.</p>
+
+    <form method="POST" action="{{ url_for('informe_gastos_por_categoria') }}">
+        <div class="grid">
+            <label for="fecha_inicio">
+                Fecha de Inicio
+                <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio if fecha_inicio else '' }}" required>
+            </label>
+            <label for="fecha_fin">
+                Fecha de Fin
+                <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin if fecha_fin else '' }}" required>
+            </label>
+        </div>
+        <button type="submit">Generar Informe</button>
+    </form>
+
+    <hr>
+
+    <div id="resultados-informe">
+        {% if resultados is not none %} {% if resultados %} <h2>Resultados para el período del {{ fecha_inicio }} al {{ fecha_fin }}</h2>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th style="text-align: right;">Monto Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for resultado in resultados %}
+                            <tr>
+                                <td>{{ resultado.nombre_categoria }}</td>
+                                <td style="text-align: right;">{{ "%.2f"|format(resultado.total_gastado) }} bs.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th style="text-align: right;">TOTAL GENERAL:</th>
+                                <th style="text-align: right;">{{ "%.2f"|format(total_informe) }} bs.</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            {% else %}
+                <p>No se encontraron gastos en el período seleccionado.</p>
+            {% endif %}
+
+        {% else %} <p>Por favor, seleccione un rango de fechas y haga clic en "Generar Informe".</p>
+        {% endif %}
+    </div>
+
+</article>
+{% endblock %}

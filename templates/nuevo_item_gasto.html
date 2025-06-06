@@ -63,8 +63,7 @@
                 <div class="grid">
                     <label for="personal_id">
                         Personal
-                        <select id="personal_id" name="personal_id">
-                            <option value="">Ninguno</option>
+                        <select id="personal_id" name="personal_id" class="detalle-especifico-select"> <option value="">Ninguno</option>
                             {% for p in personal_lista %}
                                 <option value="{{ p.id }}" {% if personal_prev and personal_prev|string == p.id|string %}selected{% endif %}>{{ p.nombre_completo }}</option>
                             {% endfor %}
@@ -72,8 +71,7 @@
                     </label>
                     <label for="proveedor_servicio_id">
                         Proveedor/Servicio
-                        <select id="proveedor_servicio_id" name="proveedor_servicio_id">
-                            <option value="">Ninguno</option>
+                        <select id="proveedor_servicio_id" name="proveedor_servicio_id" class="detalle-especifico-select"> <option value="">Ninguno</option>
                             {% for prov in proveedores_lista %}
                                 <option value="{{ prov.id }}" {% if proveedor_prev and proveedor_prev|string == prov.id|string %}selected{% endif %}>{{ prov.nombre_proveedor_servicio }}</option>
                             {% endfor %}
@@ -81,8 +79,7 @@
                     </label>
                     <label for="concepto_gasto_vario_id">
                         Concepto Vario
-                        <select id="concepto_gasto_vario_id" name="concepto_gasto_vario_id">
-                            <option value="">Ninguno</option>
+                        <select id="concepto_gasto_vario_id" name="concepto_gasto_vario_id" class="detalle-especifico-select"> <option value="">Ninguno</option>
                             {% for con in conceptos_lista %}
                                 <option value="{{ con.id }}" {% if concepto_prev and concepto_prev|string == con.id|string %}selected{% endif %}>{{ con.nombre_concepto }}</option>
                             {% endfor %}
@@ -99,4 +96,35 @@
             </footer>
         </form>
     </article>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Seleccionamos los tres menús desplegables por su clase común
+        const selects = document.querySelectorAll('.detalle-especifico-select');
+
+        // Definimos la función que manejará el cambio
+        function manejarCambioDeSelect(evento) {
+            const selectActual = evento.target;
+            const haySeleccion = selectActual.value !== '';
+
+            // Recorremos TODOS los desplegables de nuevo
+            selects.forEach(function(otroSelect) {
+                // Si este desplegable NO es el que el usuario cambió...
+                if (otroSelect !== selectActual) {
+                    // ...lo deshabilitamos si el usuario hizo una selección,
+                    // o lo habilitamos si el usuario seleccionó "Ninguno".
+                    otroSelect.disabled = haySeleccion;
+                }
+            });
+        }
+
+        // Añadimos un "escuchador de eventos" a cada desplegable.
+        selects.forEach(function(select) {
+            select.addEventListener('change', manejarCambioDeSelect);
+        });
+    });
+</script>
 {% endblock %}

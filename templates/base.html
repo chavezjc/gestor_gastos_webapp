@@ -7,13 +7,13 @@
     <style>
         /* Estilos Globales y de Navegación */
         :root {
-            --nav-height: 56px; /* Altura de la barra de navegación */
+            --nav-height: 56px;
         }
         body {
-            padding-top: var(--nav-height); /* Evita que el contenido se oculte detrás del nav fijo */
+            padding-top: var(--nav-height); 
         }
         nav.main-nav {
-            position: fixed; /* Hacemos que la barra de navegación sea fija */
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
@@ -24,7 +24,7 @@
             height: var(--nav-height);
             background-color: var(--card-background-color);
             box-shadow: var(--card-box-shadow);
-            z-index: 100; /* Asegura que esté por encima de todo */
+            z-index: 100;
         }
         .nav-brand {
             font-weight: bold;
@@ -40,7 +40,7 @@
         .nav-links-container ul li a {
             text-decoration: none;
         }
-
+        
         /* Estilos para Desplegable en Escritorio */
         li.dropdown { position: relative; }
         li.dropdown ul.dropdown-content {
@@ -58,6 +58,10 @@
         }
         li.dropdown ul.dropdown-content li {
             margin-left: 0;
+            border-bottom: 1px solid var(--card-border-color);
+        }
+        li.dropdown ul.dropdown-content li:last-child {
+            border-bottom: none;
         }
         li.dropdown ul.dropdown-content li a {
             display: block;
@@ -75,96 +79,60 @@
         .flash-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
         .flash-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
 
-        /* Estilos para el Botón Hamburguesa (oculto en escritorio) */
+        /* Estilo para grupo de botones en tablas de escritorio */
+        .action-buttons-group {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Botón Hamburguesa (oculto en escritorio) */
         .hamburger-button { display: none; }
 
         /* --- INICIO: Media Query para PANTALLAS PEQUEÑAS (Móviles) --- */
         @media screen and (max-width: 768px) {
-            /* Menú Hamburguesa */
-            .hamburger-button {
-                display: block;
-                background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--primary);
-            }
-            .nav-links-container {
-                display: none;
-                position: absolute;
-                top: var(--nav-height);
-                left: 0;
-                width: 100%;
-                background-color: var(--card-background-color);
-                box-shadow: var(--card-box-shadow);
-            }
+            
+            /* --- Menú Hamburguesa --- */
+            nav.main-nav { flex-wrap: wrap; justify-content: space-between; }
+            .hamburger-button { display: block; background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--primary); }
+            .nav-links-container { display: none; position: absolute; top: var(--nav-height); left: 0; width: 100%; background-color: var(--card-background-color); box-shadow: var(--card-box-shadow); }
             .nav-links-container.active { display: block; }
             .nav-links-container ul { flex-direction: column; width: 100%; align-items: flex-start; }
             .nav-links-container ul li { width: 100%; padding: 0; border-bottom: 1px solid var(--card-border-color); }
             .nav-links-container ul li a { padding: 1rem; }
             li.dropdown:hover > ul.dropdown-content { display: none; }
-            li.dropdown ul.dropdown-content.active-dropdown {
-                display: block; position: static; box-shadow: none; border: none; background-color: var(--code-background-color); padding-left: 1rem;
-            }
+            li.dropdown ul.dropdown-content.active-dropdown { display: block; position: static; box-shadow: none; border: none; background-color: var(--code-background-color); padding-left: 1rem; }
             li.dropdown ul.dropdown-content li { border-bottom: none; border-top: 1px solid var(--card-border-color); }
-            
-            /* Tablas Responsivas -> Tarjetas */
-            table thead {
-                border: none; clip: rect(0 0 0 0); height: 1px; margin: -1px;
-                overflow: hidden; padding: 0; position: absolute; width: 1px;
-            }
+
+            /* --- Tablas Responsivas -> Tarjetas --- */
+            table thead { border: none; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
             table, thead, tbody, th, td, tr { display: block; }
 
-            table tr {
-                margin-bottom: 1.5em;
-                border: 1px solid var(--card-border-color);
-                border-radius: var(--border-radius);
-                box-shadow: var(--card-box-shadow);
-                background-color: var(--card-background-color);
-            }
-            table td {
-                display: block;
-                text-align: right;
-                border-bottom: 1px solid var(--card-border-color);
-                padding: 1rem;
-            }
-            table td::before {
-                content: attr(data-label);
-                float: left;
-                font-weight: bold;
-                text-transform: uppercase;
-                color: var(--muted-color);
-            }
-            /* Encabezado de la Tarjeta (primera celda) */
-            table tr td:first-child {
-                background-color: #435160; /* Gris oscuro/azulado */
-                color: white;
-                text-align: center;
-                font-size: 1.25em;
-                font-weight: bold;
-                padding: 0.75rem;
-            }
-            table tr td:first-child::before { content: ""; } /* Ocultar etiqueta "ID:" */
+            table tr { margin-bottom: 1.5em; border: 1px solid var(--card-border-color); border-radius: var(--border-radius); box-shadow: var(--card-box-shadow); background-color: var(--card-background-color); }
+            table td { display: block; text-align: right; border-bottom: 1px solid var(--card-border-color); padding: 1rem; }
+            table td::before { content: attr(data-label); float: left; font-weight: bold; text-transform: uppercase; color: var(--muted-color); }
+            
+            /* Encabezado de la Tarjeta */
+            table tr td:first-child { background-color: #435160; color: white; text-align: center; font-size: 1.25em; font-weight: bold; padding: 0.75rem; }
+            table tr td:first-child::before { content: ""; }
             
             /* Celda de Acciones */
-            table td.actions { border-bottom: none; }
-            .action-buttons-group {
-                display: flex;
-                flex-wrap: wrap; /* Permite que los botones pasen a la siguiente línea si no caben */
-                justify-content: center; /* Centra los botones en móvil */
-                gap: 0.5rem;
-            }
+            table td.actions { border-bottom: none; background-color: var(--code-background-color); }
+            .action-buttons-group { justify-content: center; } /* Centra los botones en móvil */
         }
         /* --- FIN: Media Query --- */
     </style>
 </head>
-<body >
+<body>
     <main class="container">
         <nav class="main-nav">
             <a href="{{ url_for('hello_world') }}" class="nav-brand">Gestor Gastos</a>
-            
-            <button class="hamburger-button" id="hamburgerButton" aria-label="Abrir menú" aria-expanded="false">
-                &#9776; </button>
-    
+            <button class="hamburger-button" id="hamburgerButton" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
             <div class="nav-links-container" id="navLinksContainer">
                 <ul>
                     <li><a href="{{ url_for('listar_documentos') }}">Documentos a Rendir</a></li>
+                    <li><a href="{{ url_for('informe_gastos_por_categoria') }}">Informes</a></li>
                     <li class="dropdown">
                         <a href="#" class="dropbtn" onclick="toggleConfigMenu(event)">Configuración &#9662;</a>
                         <ul class="dropdown-content" id="configDropdown">
@@ -189,9 +157,9 @@
         {% endwith %}
 
         {% block content %}{% endblock %}
-
     </main>
 
+    {% block scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const hamburgerButton = document.getElementById('hamburgerButton');
@@ -219,5 +187,6 @@
             }
         });
     </script>
+    {% endblock %}
 </body>
 </html>

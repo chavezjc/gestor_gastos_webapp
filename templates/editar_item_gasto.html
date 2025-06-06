@@ -6,7 +6,9 @@
     <article>
         <header>
             <h1 style="text-align: center;">Editar Ítem de Gasto</h1>
-            <p style="text-align: center; margin-top: -1rem;">Para Documento ID: {{ item.documento_id }}</p>
+            <p style="text-align: center; margin-top: -1rem; color: var(--muted-color);">
+                Para Documento ID: {{ item.documento_id }}
+            </p>
         </header>
 
         <form method="POST" action="{{ url_for('editar_item_gasto', item_id=item.id) }}">
@@ -15,7 +17,7 @@
                 Descripción del Ítem
                 <textarea id="descripcion_item" name="descripcion_item" rows="3" required>{{ item.descripcion_item }}</textarea>
             </label>
-
+            
             <div class="grid">
                 <label for="monto_item">
                     Monto del Ítem (bs.)
@@ -37,12 +39,11 @@
                 </select>
             </label>
 
-            <details> <summary>Detalle Específico (Opcional)</summary>
+            <details open> <summary>Detalle Específico (Opcional)</summary>
                 <div class="grid">
                     <label for="personal_id">
                         Personal
-                        <select id="personal_id" name="personal_id">
-                            <option value="">Ninguno</option>
+                        <select id="personal_id" name="personal_id" class="detalle-especifico-select"> <option value="">Ninguno</option>
                             {% for p in personal_lista %}
                                 <option value="{{ p.id }}" {% if item.personal_id == p.id %}selected{% endif %}>{{ p.nombre_completo }}</option>
                             {% endfor %}
@@ -50,8 +51,7 @@
                     </label>
                     <label for="proveedor_servicio_id">
                         Proveedor/Servicio
-                        <select id="proveedor_servicio_id" name="proveedor_servicio_id">
-                            <option value="">Ninguno</option>
+                        <select id="proveedor_servicio_id" name="proveedor_servicio_id" class="detalle-especifico-select"> <option value="">Ninguno</option>
                             {% for prov in proveedores_lista %}
                                 <option value="{{ prov.id }}" {% if item.proveedor_servicio_id == prov.id %}selected{% endif %}>{{ prov.nombre_proveedor_servicio }}</option>
                             {% endfor %}
@@ -59,8 +59,7 @@
                     </label>
                     <label for="concepto_gasto_vario_id">
                         Concepto Vario
-                        <select id="concepto_gasto_vario_id" name="concepto_gasto_vario_id">
-                            <option value="">Ninguno</option>
+                        <select id="concepto_gasto_vario_id" name="concepto_gasto_vario_id" class="detalle-especifico-select"> <option value="">Ninguno</option>
                             {% for con in conceptos_lista %}
                                 <option value="{{ con.id }}" {% if item.concepto_gasto_vario_id == con.id %}selected{% endif %}>{{ con.nombre_concepto }}</option>
                             {% endfor %}
@@ -77,4 +76,58 @@
             </footer>
         </form>
     </article>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selects = document.querySelectorAll('.detalle-especifico-select');
+
+        // Función para sincronizar los desplegables. Se ejecuta al cargar la página.
+        function syncSelectsOnLoad() {
+            let selectedExists = false;
+            let activeSelect = null;
+            // Primero, vemos si alguno ya tiene una selección
+            selects.forEach(function(select) {
+                if (select.value !== '') {
+                    selectedExists = true;
+                    activeSelect = select;
+                }
+            });
+
+            // Si hay una selección, deshabilitamos los otros
+            if (selectedExists) {
+                selects.forEach(function(select) {
+                    if (select !== activeSelect) {
+                        select.disabled = true;
+                    }
+                });
+            }
+        }
+
+        // Función que se ejecuta cuando el usuario cambia una selección
+        function manejarCambioDeSelect(evento) {
+            const selectActual = evento.target;
+            const haySeleccion = selectActual.value !== '';
+
+            selects.forEach(function(otroSelect) {
+                if (otroSelect !== selectActual) {
+                    otroSelect.disabled = haySeleccion;
+                    if(haySeleccion) {
+                        otroSelect.value = ''; // Resetea el valor de los otros a "Ninguno"
+                    }
+                }
+            });
+        }
+
+        // Añadimos el "escuchador de eventos" a cada desplegable.
+        selects.forEach(function(select) {
+            select.addEventListener('change', manejarCambioDeSelect);
+        });
+
+        // Ejecutamos la sincronización inicial al cargar la página
+        syncSelectsOnLoad();
+    });
+</script>
 {% endblock %}
