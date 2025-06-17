@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
     <title>{% block title %}Gestor de Gastos{% endblock %}</title>
     <style>
-        /* Estilos Globales y de Navegación */
+        /* ... (Todos tus estilos CSS se quedan igual) ... */
         :root {
             --nav-height: 56px;
         }
@@ -41,7 +41,6 @@
             text-decoration: none;
         }
         
-        /* Estilos para Desplegable en Escritorio */
         li.dropdown { position: relative; }
         li.dropdown ul.dropdown-content {
             display: none;
@@ -71,7 +70,6 @@
             display: block;
         }
 
-        /* Estilos para Mensajes Flash */
         .flashes { list-style-type: none; padding: 0; margin-top: 1rem; }
         .flashes li { padding: 0.75em 1.25em; margin-bottom: 1rem; border: 1px solid transparent; border-radius: var(--border-radius); }
         .flash-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
@@ -79,7 +77,6 @@
         .flash-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
         .flash-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
 
-        /* Estilo para grupo de botones en tablas de escritorio */
         .action-buttons-group {
             display: flex;
             justify-content: flex-end;
@@ -87,13 +84,10 @@
             gap: 0.5rem;
         }
 
-        /* Botón Hamburguesa (oculto en escritorio) */
         .hamburger-button { display: none; }
 
-        /* --- INICIO: Media Query para PANTALLAS PEQUEÑAS (Móviles) --- */
         @media screen and (max-width: 768px) {
             
-            /* --- Menú Hamburguesa --- */
             nav.main-nav { flex-wrap: wrap; justify-content: space-between; }
             .hamburger-button { display: block; background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--primary); }
             .nav-links-container { display: none; position: absolute; top: var(--nav-height); left: 0; width: 100%; background-color: var(--card-background-color); box-shadow: var(--card-box-shadow); }
@@ -105,7 +99,6 @@
             li.dropdown ul.dropdown-content.active-dropdown { display: block; position: static; box-shadow: none; border: none; background-color: var(--code-background-color); padding-left: 1rem; }
             li.dropdown ul.dropdown-content li { border-bottom: none; border-top: 1px solid var(--card-border-color); }
 
-            /* --- Tablas Responsivas -> Tarjetas --- */
             table thead { border: none; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
             table, thead, tbody, th, td, tr { display: block; }
 
@@ -113,15 +106,12 @@
             table td { display: block; text-align: right; border-bottom: 1px solid var(--card-border-color); padding: 1rem; }
             table td::before { content: attr(data-label); float: left; font-weight: bold; text-transform: uppercase; color: var(--muted-color); }
             
-            /* Encabezado de la Tarjeta */
             table tr td:first-child { background-color: #435160; color: white; text-align: center; font-size: 1.25em; font-weight: bold; padding: 0.75rem; }
             table tr td:first-child::before { content: ""; }
             
-            /* Celda de Acciones */
             table td.actions { border-bottom: none; background-color: var(--code-background-color); }
-            .action-buttons-group { justify-content: center; } /* Centra los botones en móvil */
+            .action-buttons-group { justify-content: center; } 
         }
-        /* --- FIN: Media Query --- */
     </style>
 </head>
 <body>
@@ -130,20 +120,27 @@
             <a href="{{ url_for('hello_world') }}" class="nav-brand">Gestor Gastos</a>
             <button class="hamburger-button" id="hamburgerButton" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
             <div class="nav-links-container" id="navLinksContainer">
+                
                 <ul>
-                    <li><a href="{{ url_for('listar_documentos') }}">Documentos a Rendir</a></li>
-                    <li><a href="{{ url_for('informe_gastos_por_categoria') }}">Informes</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropbtn" onclick="toggleConfigMenu(event)">Configuración &#9662;</a>
-                        <ul class="dropdown-content" id="configDropdown">
-                            <li><a href="{{ url_for('listar_personal') }}">Personal</a></li>
-                            <li><a href="{{ url_for('listar_proveedores') }}">Proveedores/Servicios</a></li>
-                            <li><a href="{{ url_for('listar_conceptos') }}">Conceptos Varios</a></li>
-                            <li><a href="{{ url_for('listar_categorias') }}">Categorías</a></li>
-                        </ul>
-                    </li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('listar_documentos') }}">Documentos a Rendir</a></li>
+                        <li><a href="{{ url_for('informe_gastos_por_categoria') }}">Informes</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropbtn" onclick="toggleConfigMenu(event)">Configuración &#9662;</a>
+                            <ul class="dropdown-content" id="configDropdown">
+                                <li><a href="{{ url_for('listar_personal') }}">Personal</a></li>
+                                <li><a href="{{ url_for('listar_proveedores') }}">Proveedores/Servicios</a></li>
+                                <li><a href="{{ url_for('listar_conceptos') }}">Conceptos Varios</a></li>
+                                <li><a href="{{ url_for('listar_categorias') }}">Categorías</a></li>
+                            </ul>
+                        </li>
+                        <li><span>Hola, {{ current_user.nombre_completo }}</span></li>
+                        <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}">Iniciar Sesión con Google</a></li>
+                    {% endif %}
                 </ul>
-            </div>
+                </div>
         </nav>
 
         {% with messages = get_flashed_messages(with_categories=true) %}

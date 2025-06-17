@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Iniciar Sesión - Gestor de Gastos{% endblock %}
+
+{% block content %}
+<article style="text-align: center;">
+    <h1>Bienvenido al Gestor de Gastos</h1>
+    <p>Por favor, inicie sesión para continuar.</p>
+    <a href="{{ url_for('login') }}" role="button" class="contrast">Iniciar Sesión con Google</a>
+</article>
+{% endblock %}
