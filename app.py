@@ -9,6 +9,8 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from flask_login import LoginManager, current_user, login_user, logout_user, UserMixin, login_required
 from flask_dance.contrib.google import make_google_blueprint, google
+from functools import wraps
+from flask_migrate import Migrate # Importar para Flask-Migrate
 
 # 2. ===============================================================
 #    CONFIGURACIÓN E INICIALIZACIÓN DE LA APP Y EXTENSIONES
@@ -37,9 +39,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'hello_world'
 
-@login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(Personal, int(user_id))
+# Inicializar Flask-Migrate
+migrate = Migrate(app, db) # <--- AÑADIDO
 
 # 3. ===============================================================
 #    DEFINICIONES DE MODELOS DE BASE DE DATOS
@@ -52,6 +53,7 @@ class Personal(db.Model, UserMixin):
     documento_identidad = db.Column(db.String(20), nullable=False, unique=True)
     cargo = db.Column(db.String(100), nullable=True)
     activo = db.Column(db.Boolean, nullable=False, default=True)
+    rol = db.Column(db.String(50), nullable=True, default=None) # CAMBIO: nullable=True, default=None
     fecha_creacion_registro = db.Column(db.DateTime, nullable=False, server_default=func.now())
     fecha_ultima_modificacion = db.Column(db.DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     def __repr__(self): return f'<Personal {self.id}: {self.nombre_completo}>'
@@ -120,11 +122,39 @@ class ItemsGasto(db.Model):
     concepto_vario = db.relationship('ConceptosGastoVarios', backref=db.backref('items_por_concepto_vario', lazy=True))
     def __repr__(self): return f'<ItemsGasto {self.id}: {self.descripcion_item} - {self.monto_item}>'
 
-# 4. --- FUNCIONES AUXILIARES ---
+# Este user_loader debe estar definido DESPUÉS de la clase Personal
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(Personal, int(user_id))
+
+# 4. --- FUNCIONES AUXILIARES Y DECORADORES DE ROL ---
+
+# Decoradores personalizados para control de acceso por rol
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # CAMBIO AQUÍ: Verifica explícitamente el rol 'Administrador'
+        if not current_user.is_authenticated or current_user.rol != 'Administrador':
+            flash('Acceso denegado. Se requiere rol de Administrador.', 'danger')
+            return redirect(url_for('hello_world'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def contador_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # CAMBIO AQUÍ: Verifica si el rol es 'Contador' o 'Administrador'
+        if not current_user.is_authenticated or (current_user.rol not in ['Contador', 'Administrador']):
+            flash('Acceso denegado. Se requiere rol de Contador o Administrador.', 'danger')
+            return redirect(url_for('hello_world'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 def actualizar_estado_documento(documento_id_a_actualizar):
     doc = db.session.get(DocumentosARendir, documento_id_a_actualizar)
     if not doc or doc.estado_documento == 'Anulado': return
-    nuevo_estado = doc.estado_documento 
+    nuevo_estado = doc.estado_documento
     if doc.monto_total_documento is not None and doc.monto_total_documento > 0:
         suma_items = sum(item.monto_item for item in doc.items if item.monto_item is not None)
         if suma_items == doc.monto_total_documento: nuevo_estado = 'Rendido'
@@ -133,7 +163,7 @@ def actualizar_estado_documento(documento_id_a_actualizar):
         elif suma_items > doc.monto_total_documento:
             nuevo_estado = 'Parcialmente Rendido'
             flash(f"Advertencia: La suma de ítems ({suma_items:.2f} bs) para el documento #{doc.numero_documento} excede su monto total ({doc.monto_total_documento:.2f} bs).", "warning")
-    else: 
+    else:
         nuevo_estado = 'Pendiente'
     if doc.estado_documento != nuevo_estado:
         doc.estado_documento = nuevo_estado
@@ -151,15 +181,23 @@ def actualizar_estado_documento(documento_id_a_actualizar):
 def hello_world():
     if not current_user.is_authenticated:
         return render_template('login.html')
-    documentos_por_rendir = DocumentosARendir.query.filter(or_(DocumentosARendir.estado_documento == 'Pendiente', DocumentosARendir.estado_documento == 'Parcialmente Rendido')).order_by(DocumentosARendir.fecha_emision.asc()).all()
-    num_docs_por_rendir = len(documentos_por_rendir)
+    
+    documentos_por_rendir = []
+    num_docs_por_rendir = 0
     total_saldo_por_rendir = Decimal(0)
-    for doc in documentos_por_rendir:
-        if doc.monto_total_documento is not None:
-            suma_items = sum(item.monto_item for item in doc.items if item.monto_item is not None)
-            saldo_individual = doc.monto_total_documento - suma_items
-            total_saldo_por_rendir += saldo_individual
-    return render_template('index.html', 
+
+    # Solo si el usuario es un Contador o Administrador, calcular estos valores
+    # CAMBIO: Solo se muestran datos si el usuario tiene rol definido (no 'None')
+    if current_user.rol in ['Contador', 'Administrador']:
+        documentos_por_rendir = DocumentosARendir.query.filter(or_(DocumentosARendir.estado_documento == 'Pendiente', DocumentosARendir.estado_documento == 'Parcialmente Rendido')).order_by(DocumentosARendir.fecha_emision.asc()).all()
+        num_docs_por_rendir = len(documentos_por_rendir)
+        for doc in documentos_por_rendir:
+            if doc.monto_total_documento is not None:
+                suma_items = sum(item.monto_item for item in doc.items if item.monto_item is not None)
+                saldo_individual = doc.monto_total_documento - suma_items
+                total_saldo_por_rendir += saldo_individual
+
+    return render_template('index.html',
                            num_por_rendir=num_docs_por_rendir,
                            saldo_total_por_rendir=total_saldo_por_rendir,
                            documentos_a_revisar=documentos_por_rendir)
@@ -173,18 +211,39 @@ def login():
         assert resp.ok, resp.text
         user_info = resp.json()
         email = user_info["email"]
+        nombre_completo = user_info.get("name", "Usuario Google") # Obtener el nombre
     except Exception as e:
         flash(f"Error al obtener información de Google: {str(e)}", "danger")
         return redirect(url_for("hello_world"))
+
     if not email.endswith("@srlpunto.com"):
         flash("Error: Solo se permite el acceso con cuentas del dominio @srlpunto.com.", "danger")
-        return redirect(url_for("logout")) 
+        return redirect(url_for("logout")) # Redirige a logout para limpiar la sesión
+
     user = Personal.query.filter_by(email=email).first()
     if user:
         login_user(user)
         flash("Inicio de sesión exitoso.", "success")
     else:
-        flash(f"Acceso denegado. El usuario con email {email} no está registrado en el sistema.", "danger")
+        # Si el usuario no existe, lo creamos.
+        # El primer usuario creado será el Administrador.
+        # Los subsiguientes se crearán SIN rol (None), requiriendo asignación manual por un admin.
+        if Personal.query.count() == 0: # Si no hay usuarios en la BD, este será el administrador inicial
+            new_user = Personal(email=email, nombre_completo=nombre_completo, documento_identidad="N/A_GOOGLE", cargo="Primer Admin", rol="Administrador", activo=True) # CAMBIO: Rol por defecto si no hay usuarios
+            flash("¡Bienvenido! Has sido registrado como el primer Administrador.", "success")
+        else:
+            new_user = Personal(email=email, nombre_completo=nombre_completo, documento_identidad="N/A_GOOGLE", cargo="Nuevo usuario sin rol", rol=None, activo=True) # CAMBIO: Por defecto sin rol
+            flash(f"Acceso concedido. Usuario {email} registrado sin rol. Contacte a un administrador para asignación.", "info")
+
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user)
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al registrar nuevo usuario: {str(e)}. Intente de nuevo.", "danger")
+            return redirect(url_for("hello_world"))
+
     return redirect(url_for("hello_world"))
 
 @app.route("/logout")
@@ -195,19 +254,35 @@ def logout():
     flash("Has cerrado sesión exitosamente.", "info")
     return redirect(url_for("hello_world"))
 
-# --- Rutas CRUD para Personal ---
+
+# --- Rutas CRUD para Personal (Gestión de Usuarios - Admin Only para crear/editar roles) ---
 @app.route('/personal')
 @login_required
+@contador_required # Contadores pueden listar personal para ver información, pero no crear/modificar roles
 def listar_personal():
     lista_de_personal = Personal.query.order_by(Personal.nombre_completo).all()
     return render_template('listar_personal.html', personal_lista=lista_de_personal)
 
 @app.route('/personal/nuevo', methods=['GET', 'POST'])
 @login_required
+@admin_required # Solo administradores pueden crear nuevos usuarios y asignarles roles
 def crear_personal():
     if request.method == 'POST':
         try:
-            nueva_persona = Personal(nombre_completo=request.form['nombre_completo'], documento_identidad=request.form['documento_identidad'], cargo=request.form.get('cargo'), activo='activo' in request.form)
+            # Los administradores pueden decidir el rol aquí.
+            # CAMBIO: Obtener el rol, si no se envía (e.g. desde un campo oculto si no es admin), será None
+            rol_seleccionado = request.form.get('rol') # El rol puede ser None ahora
+            if rol_seleccionado == '': # Si se seleccionó la opción "Ninguno"
+                rol_seleccionado = None
+
+            nueva_persona = Personal(
+                nombre_completo=request.form['nombre_completo'],
+                documento_identidad=request.form['documento_identidad'],
+                cargo=request.form.get('cargo'),
+                activo='activo' in request.form,
+                email=request.form.get('email'),
+                rol=rol_seleccionado # Asigna el rol_seleccionado (que puede ser None)
+            )
             db.session.add(nueva_persona)
             db.session.commit()
             flash('Persona añadida exitosamente!', 'success')
@@ -219,6 +294,7 @@ def crear_personal():
 
 @app.route('/personal/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
+@admin_required # Solo administradores pueden editar todos los campos, incluyendo el rol
 def editar_personal(id):
     persona_a_editar = db.session.get(Personal, id)
     if not persona_a_editar: return "Persona no encontrada", 404
@@ -228,6 +304,13 @@ def editar_personal(id):
             persona_a_editar.documento_identidad = request.form['documento_identidad']
             persona_a_editar.cargo = request.form.get('cargo')
             persona_a_editar.activo = 'activo' in request.form
+            persona_a_editar.email = request.form.get('email')
+
+            # Solo si el current_user es administrador, permitir cambiar el rol
+            if current_user.rol == 'Administrador':
+                rol_form = request.form.get('rol')
+                persona_a_editar.rol = rol_form if rol_form != '' else None # CAMBIO: Manejar 'None' desde el formulario
+            
             db.session.commit()
             flash('Persona actualizada exitosamente!', 'success')
             return redirect(url_for('listar_personal'))
@@ -238,9 +321,14 @@ def editar_personal(id):
 
 @app.route('/personal/eliminar/<int:id>', methods=['POST'])
 @login_required
+@admin_required # Solo administradores pueden eliminar personal
 def eliminar_personal(id):
     persona_a_eliminar = db.session.get(Personal, id)
     if not persona_a_eliminar: return "Persona no encontrada", 404
+    # No permitir que un administrador se elimine a sí mismo si es el único administrador
+    if persona_a_eliminar.rol == 'Administrador' and Personal.query.filter_by(rol='Administrador').count() == 1:
+        flash('No puedes eliminar el único usuario Administrador.', 'danger')
+        return redirect(url_for('listar_personal'))
     try:
         db.session.delete(persona_a_eliminar)
         db.session.commit()
@@ -253,12 +341,14 @@ def eliminar_personal(id):
 # --- CRUD para ProveedoresServicios ---
 @app.route('/proveedores')
 @login_required
+@contador_required
 def listar_proveedores():
     lista_de_proveedores = ProveedoresServicios.query.order_by(ProveedoresServicios.nombre_proveedor_servicio).all()
     return render_template('listar_proveedores.html', proveedores_lista=lista_de_proveedores)
 
 @app.route('/proveedores/nuevo', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def crear_proveedor():
     if request.method == 'POST':
         try:
@@ -274,6 +364,7 @@ def crear_proveedor():
 
 @app.route('/proveedores/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def editar_proveedor(id):
     proveedor_a_editar = db.session.get(ProveedoresServicios, id)
     if not proveedor_a_editar: return "Proveedor no encontrado", 404
@@ -293,6 +384,7 @@ def editar_proveedor(id):
 
 @app.route('/proveedores/eliminar/<int:id>', methods=['POST'])
 @login_required
+@contador_required
 def eliminar_proveedor(id):
     proveedor_a_eliminar = db.session.get(ProveedoresServicios, id)
     if not proveedor_a_eliminar: return "Proveedor no encontrado", 404
@@ -308,12 +400,14 @@ def eliminar_proveedor(id):
 # --- CRUD para ConceptosGastoVarios ---
 @app.route('/conceptos')
 @login_required
+@contador_required
 def listar_conceptos():
     lista_de_conceptos = ConceptosGastoVarios.query.order_by(ConceptosGastoVarios.nombre_concepto).all()
     return render_template('listar_conceptos.html', conceptos_lista=lista_de_conceptos)
 
 @app.route('/conceptos/nuevo', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def crear_concepto():
     if request.method == 'POST':
         try:
@@ -329,6 +423,7 @@ def crear_concepto():
 
 @app.route('/conceptos/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def editar_concepto(id):
     concepto_a_editar = db.session.get(ConceptosGastoVarios, id)
     if not concepto_a_editar: return "Concepto no encontrado", 404
@@ -347,6 +442,7 @@ def editar_concepto(id):
 
 @app.route('/conceptos/eliminar/<int:id>', methods=['POST'])
 @login_required
+@contador_required
 def eliminar_concepto(id):
     concepto_a_eliminar = db.session.get(ConceptosGastoVarios, id)
     if not concepto_a_eliminar: return "Concepto no encontrado", 404
@@ -362,12 +458,14 @@ def eliminar_concepto(id):
 # --- CRUD para CategoriasGastoPrincipales ---
 @app.route('/categorias')
 @login_required
+@contador_required
 def listar_categorias():
     lista_de_categorias = CategoriasGastoPrincipales.query.order_by(CategoriasGastoPrincipales.nombre_categoria).all()
     return render_template('listar_categorias.html', categorias_lista=lista_de_categorias)
 
 @app.route('/categorias/nueva', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def crear_categoria():
     if request.method == 'POST':
         try:
@@ -376,13 +474,14 @@ def crear_categoria():
             db.session.commit()
             flash('Categoría añadida exitosamente!', 'success')
             return redirect(url_for('listar_categorias'))
-        except Exception as e: 
+        except Exception as e:
             db.session.rollback()
             flash(f'Error al añadir categoría: {str(e)}', 'danger')
     return render_template('nueva_categoria.html')
 
 @app.route('/categorias/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def editar_categoria(id):
     categoria_a_editar = db.session.get(CategoriasGastoPrincipales, id)
     if not categoria_a_editar: return "Categoría no encontrada", 404
@@ -401,6 +500,7 @@ def editar_categoria(id):
 
 @app.route('/categorias/eliminar/<int:id>', methods=['POST'])
 @login_required
+@contador_required
 def eliminar_categoria(id):
     categoria_a_eliminar = db.session.get(CategoriasGastoPrincipales, id)
     if not categoria_a_eliminar: return "Categoría no encontrada", 404
@@ -416,12 +516,14 @@ def eliminar_categoria(id):
 # --- CRUD para DocumentosARendir ---
 @app.route('/documentos')
 @login_required
+@contador_required
 def listar_documentos():
     lista_de_documentos = DocumentosARendir.query.order_by(DocumentosARendir.fecha_emision.desc()).all()
     return render_template('listar_documentos.html', documentos_lista=lista_de_documentos)
 
 @app.route('/documentos/nuevo', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def crear_documento():
     if request.method == 'POST':
         try:
@@ -444,6 +546,7 @@ def crear_documento():
 
 @app.route('/documentos/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def editar_documento(id):
     documento_a_editar = db.session.get(DocumentosARendir, id)
     if not documento_a_editar: return "Documento no encontrado", 404
@@ -471,6 +574,7 @@ def editar_documento(id):
 
 @app.route('/documentos/eliminar/<int:id>', methods=['POST'])
 @login_required
+@contador_required
 def eliminar_documento(id):
     documento_a_eliminar = db.session.get(DocumentosARendir, id)
     if not documento_a_eliminar: return "Documento no encontrado", 404
@@ -486,6 +590,7 @@ def eliminar_documento(id):
 # --- CRUD ItemsGasto ---
 @app.route('/documento/<int:documento_id>/items')
 @login_required
+@contador_required
 def ver_documento_items(documento_id):
     documento = db.session.get(DocumentosARendir, documento_id)
     if not documento: return "Documento no encontrado", 404
@@ -498,6 +603,7 @@ def ver_documento_items(documento_id):
 
 @app.route('/documento/<int:documento_id>/item/nuevo', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def crear_item_gasto(documento_id):
     documento = db.session.get(DocumentosARendir, documento_id)
     if not documento: return "Documento no encontrado", 404
@@ -505,18 +611,18 @@ def crear_item_gasto(documento_id):
     lista_personal = Personal.query.filter_by(activo=True).order_by(Personal.nombre_completo).all()
     lista_proveedores = ProveedoresServicios.query.filter_by(activo=True).order_by(ProveedoresServicios.nombre_proveedor_servicio).all()
     lista_conceptos = ConceptosGastoVarios.query.filter_by(activo=True).order_by(ConceptosGastoVarios.nombre_concepto).all()
-    
+
     suma_items_existentes = sum(item.monto_item for item in documento.items if item.monto_item is not None)
     saldo_a_rendir = None
     if documento.monto_total_documento is not None:
         saldo_a_rendir = documento.monto_total_documento - suma_items_existentes
-    
+
     template_context_base = {'documento': documento, 'monto_total_doc': documento.monto_total_documento, 'suma_ya_rendida': suma_items_existentes, 'saldo_pendiente': saldo_a_rendir, 'categorias': categorias, 'personal_lista': lista_personal, 'proveedores_lista': lista_proveedores, 'conceptos_lista': lista_conceptos}
 
     if request.method == 'POST':
         form_data_prev = {'descripcion_item_prev': request.form.get('descripcion_item'), 'monto_item_prev': request.form.get('monto_item'), 'fecha_item_prev': request.form.get('fecha_item'), 'categoria_prev': request.form.get('categoria_principal_id'), 'personal_prev': request.form.get('personal_id'), 'proveedor_prev': request.form.get('proveedor_servicio_id'), 'concepto_prev': request.form.get('concepto_gasto_vario_id')}
         current_template_context = {**template_context_base, **form_data_prev}
-        
+
         personal_id_str = request.form.get('personal_id')
         proveedor_id_str = request.form.get('proveedor_servicio_id')
         concepto_id_str = request.form.get('concepto_gasto_vario_id')
@@ -524,7 +630,7 @@ def crear_item_gasto(documento_id):
         if len(opcionales_seleccionados) > 1:
             flash('Error: Solo puede seleccionar UN detalle específico (Personal, Proveedor/Servicio, o Concepto Vario).', 'danger')
             return render_template('nuevo_item_gasto.html', **current_template_context)
-            
+
         try:
             monto_nuevo_item_decimal = Decimal(request.form['monto_item'])
             if monto_nuevo_item_decimal <= 0: raise ValueError("El monto debe ser positivo.")
@@ -532,7 +638,7 @@ def crear_item_gasto(documento_id):
             categoria_id_form = int(request.form['categoria_principal_id'])
             if documento.monto_total_documento is not None and (suma_items_existentes + monto_nuevo_item_decimal) > documento.monto_total_documento:
                 raise ValueError(f'La suma de ítems excede el monto del documento.')
-            
+
             nuevo_item = ItemsGasto(documento_id=documento.id, categoria_principal_id=categoria_id_form, descripcion_item=request.form['descripcion_item'], monto_item=monto_nuevo_item_decimal, fecha_item=fecha_item_obj, personal_id=int(personal_id_str) if personal_id_str else None, proveedor_servicio_id=int(proveedor_id_str) if proveedor_id_str else None, concepto_gasto_vario_id=int(concepto_id_str) if concepto_id_str else None)
             db.session.add(nuevo_item)
             db.session.commit()
@@ -546,17 +652,18 @@ def crear_item_gasto(documento_id):
             db.session.rollback()
             flash(f'Error al guardar el ítem: {str(e)}', 'danger')
             return render_template('nuevo_item_gasto.html', **current_template_context)
-            
+
     fecha_item_default = documento.fecha_emision.strftime('%Y-%m-%d') if documento.fecha_emision else ''
     return render_template('nuevo_item_gasto.html', **template_context_base, fecha_item_prev=fecha_item_default)
 
 @app.route('/item/editar/<int:item_id>', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def editar_item_gasto(item_id):
     item_a_editar = db.session.get(ItemsGasto, item_id)
     if not item_a_editar: return "Ítem no encontrado", 404
     documento_padre = item_a_editar.documento
-    
+
     categorias = CategoriasGastoPrincipales.query.filter_by(activa=True).order_by(CategoriasGastoPrincipales.nombre_categoria).all()
     lista_personal = Personal.query.filter_by(activo=True).order_by(Personal.nombre_completo).all()
     lista_proveedores = ProveedoresServicios.query.filter_by(activo=True).order_by(ProveedoresServicios.nombre_proveedor_servicio).all()
@@ -572,14 +679,14 @@ def editar_item_gasto(item_id):
         if len(opcionales_seleccionados) > 1:
             flash('Error: Solo puede seleccionar UN detalle específico.', 'danger')
             return render_template('editar_item_gasto.html', **template_context_base_edit)
-            
+
         try:
             nuevo_monto_item_decimal = Decimal(request.form['monto_item'])
             if documento_padre.monto_total_documento is not None:
                 suma_otros_items = sum(item.monto_item for item in documento_padre.items if item.id != item_a_editar.id and item.monto_item is not None)
                 if (suma_otros_items + nuevo_monto_item_decimal) > documento_padre.monto_total_documento:
                     raise ValueError(f'La suma de ítems excede el monto del documento.')
-            
+
             item_a_editar.descripcion_item = request.form['descripcion_item']
             item_a_editar.monto_item = nuevo_monto_item_decimal
             item_a_editar.fecha_item = datetime.strptime(request.form['fecha_item'], '%Y-%m-%d').date()
@@ -587,12 +694,12 @@ def editar_item_gasto(item_id):
             item_a_editar.personal_id = int(personal_id_str) if personal_id_str else None
             item_a_editar.proveedor_servicio_id = int(proveedor_id_str) if proveedor_id_str else None
             item_a_editar.concepto_gasto_vario_id = int(concepto_id_str) if concepto_id_str else None
-            
+
             db.session.commit()
             actualizar_estado_documento(documento_padre.id)
             flash('Ítem de gasto actualizado exitosamente!', 'success')
             return redirect(url_for('ver_documento_items', documento_id=documento_padre.id))
-        
+
         except (ValueError, InvalidOperation) as e:
             flash(f"Error de validación: {str(e)}", 'danger')
             return render_template('editar_item_gasto.html', **template_context_base_edit)
@@ -600,11 +707,12 @@ def editar_item_gasto(item_id):
             db.session.rollback()
             flash(f'Error al actualizar el ítem: {str(e)}', 'danger')
             return render_template('editar_item_gasto.html', **template_context_base_edit)
-            
+
     return render_template('editar_item_gasto.html', **template_context_base_edit)
 
 @app.route('/item/eliminar/<int:item_id>', methods=['POST'])
 @login_required
+@contador_required
 def eliminar_item_gasto(item_id):
     item_a_eliminar = db.session.get(ItemsGasto, item_id)
     if not item_a_eliminar: return "Ítem no encontrado", 404
@@ -623,8 +731,8 @@ def eliminar_item_gasto(item_id):
 # --- Ruta para Informes ---
 @app.route('/informes/gastos_por_categoria', methods=['GET', 'POST'])
 @login_required
+@contador_required
 def informe_gastos_por_categoria():
-    # Tu lógica para el informe aquí
     if request.method == 'POST':
         try:
             fecha_inicio_str = request.form.get('fecha_inicio')
@@ -641,4 +749,9 @@ def informe_gastos_por_categoria():
 
 # 6. --- BLOQUE DE EJECUCIÓN FINAL ---
 if __name__ == '__main__':
+    with app.app_context():
+        # db.create_all() # Descomenta solo si estás inicializando la DB por primera vez
+        # En producción, usa Flask-Migrate para las migraciones
+        pass # Mantener para el contexto de la aplicación
+
     app.run(debug=True)

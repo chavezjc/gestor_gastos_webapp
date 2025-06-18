@@ -3,11 +3,13 @@
 {% block title %}Editar Personal - Gestor de Gastos{% endblock %}
 
 {% block content %}
-    <article> <h1 style="text-align: center;">Editar Persona del Staff</h1>
+    <article>
+        <h1 style="text-align: center;">Editar Persona del Staff</h1>
 
         <form method="POST" action="{{ url_for('editar_personal', id=persona.id) }}">
-            
-            <div class="grid"> <label for="nombre_completo">
+
+            <div class="grid">
+                <label for="nombre_completo">
                     Nombre Completo
                     <input type="text" id="nombre_completo" name="nombre_completo" value="{{ persona.nombre_completo }}" required>
                 </label>
@@ -18,11 +20,33 @@
                 </label>
             </div>
 
+            <label for="email">
+                Email (Opcional, si usa Google Login)
+                <input type="email" id="email" name="email" value="{{ persona.email if persona.email else '' }}">
+            </label>
+
             <label for="cargo">
                 Cargo (Opcional)
                 <input type="text" id="cargo" name="cargo" value="{{ persona.cargo if persona.cargo }}">
             </label>
-            
+
+            {% if current_user.rol == 'Administrador' %} {# Solo Admin puede ver y editar el rol #}
+                <label for="rol">
+                    Rol
+                    <select id="rol" name="rol" required>
+                        <option value="" {% if persona.rol is none or persona.rol == '' %}selected{% endif %}>Sin Rol</option> {# Opción "Sin Rol" #}
+                        <option value="Contador" {% if persona.rol == 'Contador' %}selected{% endif %}>Contador</option>
+                        <option value="Administrador" {% if persona.rol == 'Administrador' %}selected{% endif %}>Administrador</option>
+                    </select>
+                </label>
+            {% else %} {# Para otros roles, mostrar solo el rol actual como texto #}
+                <label>
+                    Rol:
+                    <input type="text" value="{{ persona.rol if persona.rol else 'Sin Rol' }}" disabled>
+                    <input type="hidden" name="rol" value="{{ persona.rol if persona.rol else '' }}"> {# Enviar el rol actual (o cadena vacía) para que no se pierda #}
+                </label>
+            {% endif %}
+
             <fieldset>
                 <label for="activo">
                     <input type="checkbox" id="activo" name="activo" value="true" role="switch" {% if persona.activo %}checked{% endif %}>
