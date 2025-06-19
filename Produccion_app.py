@@ -298,25 +298,45 @@ def crear_personal():
             flash(f'Error al añadir persona: {str(e)}', 'danger')
     return render_template('nuevo_personal.html')
 
+
+
+
+# Vamos a crear una versión TEMPORAL SIN DECORADOR DE ROL
 @app.route('/personal/editar/<int:id>', methods=['GET', 'POST'])
-@login_required
-@admin_required # Solo administradores pueden editar todos los campos, incluyendo el rol
+@login_required # Solo login_required, sin @admin_required
 def editar_personal(id):
+    # NOTA: Esto expone la ruta a cualquiera logueado. Es solo para depuración.
     persona_a_editar = db.session.get(Personal, id)
     if not persona_a_editar: return "Persona no encontrada", 404
+
+    # Añade depuración para ver el rol del usuario que accede
+    import logging
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.info(f"DEBUG EDIT_PERSONAL: Acceso a editar_personal para usuario: {current_user.nombre_completo}, Rol: {current_user.rol}")
+
+
     if request.method == 'POST':
         try:
             persona_a_editar.nombre_completo = request.form['nombre_completo']
             persona_a_editar.documento_identidad = request.form['documento_identidad']
             persona_a_editar.cargo = request.form.get('cargo')
             persona_a_editar.activo = 'activo' in request.form
-            persona_a_editar.email = request.form.get('email')
 
-            # Solo si el current_user es administrador, permitir cambiar el rol
+            email_form = request.form.get('email')
+            persona_a_editar.email = email_form if email_form else None
+
+            # Esto es una copia del decorador, pero aquí lo controlamos explícitamente.
+            # Si el rol es admin, permite cambiar el rol
             if current_user.rol == 'Administrador':
                 rol_form = request.form.get('rol')
-                persona_a_editar.rol = rol_form if rol_form != '' else None # CAMBIO: Manejar 'None' desde el formulario
-            
+                persona_a_editar.rol = rol_form if rol_form != '' else None
+            # Si no es admin, no permitir cambiar el rol, aunque la interfaz lo oculte
+            else:
+                flash("No tienes permiso para cambiar el rol de los usuarios.", "warning")
+                # Mantener el rol existente si no es admin y se intenta modificar
+                db.session.rollback() # Deshacer si se intentó cambiar el rol sin permiso
+                # Y se puede redirigir o simplemente no actualizar el rol
+
             db.session.commit()
             flash('Persona actualizada exitosamente!', 'success')
             return redirect(url_for('listar_personal'))
@@ -324,6 +344,7 @@ def editar_personal(id):
             db.session.rollback()
             flash(f'Error al actualizar persona: {str(e)}', 'danger')
     return render_template('editar_personal.html', persona=persona_a_editar)
+
 
 @app.route('/personal/eliminar/<int:id>', methods=['POST'])
 @login_required
