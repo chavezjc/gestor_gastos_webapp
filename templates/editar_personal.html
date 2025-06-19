@@ -30,20 +30,20 @@
                 <input type="text" id="cargo" name="cargo" value="{{ persona.cargo if persona.cargo }}">
             </label>
 
-            {% if current_user.rol == 'Administrador' %} {# Solo Admin puede ver y editar el rol #}
+            {% if current_user.rol == 'Administrador' %}
                 <label for="rol">
                     Rol
-                    <select id="rol" name="rol" required>
-                        <option value="" {% if persona.rol is none or persona.rol == '' %}selected{% endif %}>Sin Rol</option> {# Opción "Sin Rol" #}
+                    <select id="rol" name="rol"> {# <-- ASEGÚRATE DE QUE 'required' NO ESTÉ AQUÍ #}
+                        <option value="" {% if persona.rol is none or persona.rol == '' %}selected{% endif %}>Sin Rol</option>
                         <option value="Contador" {% if persona.rol == 'Contador' %}selected{% endif %}>Contador</option>
                         <option value="Administrador" {% if persona.rol == 'Administrador' %}selected{% endif %}>Administrador</option>
                     </select>
                 </label>
-            {% else %} {# Para otros roles, mostrar solo el rol actual como texto #}
+            {% else %}
                 <label>
                     Rol:
                     <input type="text" value="{{ persona.rol if persona.rol else 'Sin Rol' }}" disabled>
-                    <input type="hidden" name="rol" value="{{ persona.rol if persona.rol else '' }}"> {# Enviar el rol actual (o cadena vacía) para que no se pierda #}
+                    <input type="hidden" name="rol" value="{{ persona.rol if persona.rol else '' }}">
                 </label>
             {% endif %}
 

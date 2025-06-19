@@ -7,7 +7,7 @@
         <h1 style="text-align: center;">Añadir Nueva Persona al Staff</h1>
 
         <form method="POST" action="{{ url_for('crear_personal') }}">
-            
+
             <div class="grid">
                 <label for="nombre_completo">
                     Nombre Completo
@@ -18,7 +18,7 @@
                     <input type="text" id="documento_identidad" name="documento_identidad" placeholder="Ej: 1234567" required>
                 </label>
             </div>
-            
+
             <label for="email">
                 Email (Opcional, si usa Google Login)
                 <input type="email" id="email" name="email" placeholder="ejemplo@srlpunto.com">
@@ -29,17 +29,17 @@
                 <input type="text" id="cargo" name="cargo" placeholder="Ej: Administrador">
             </label>
 
-            {% if current_user.rol == 'Administrador' %} {# Solo Admin puede ver y elegir el rol #}
+            {% if current_user.rol == 'Administrador' %}
                 <label for="rol">
                     Rol
-                    <select id="rol" name="rol"> {# CAMBIO CLAVE: Eliminamos 'required' aquí #}
-                        <option value="" selected>Sin Rol</option> {# Opción para "Sin Rol" como seleccionada por defecto #}
+                    <select id="rol" name="rol"> {# <-- ASEGÚRATE DE QUE 'required' NO ESTÉ AQUÍ #}
+                        <option value="">Sin Rol</option> {# Opción para "Sin Rol" #}
                         <option value="Contador">Contador</option>
                         <option value="Administrador">Administrador</option>
                     </select>
                 </label>
-            {% else %} {# Para otros roles, enviar un valor oculto por defecto 'None' #}
-                <input type="hidden" name="rol" value=""> {# Envía cadena vacía que se convierte en None en app.py #}
+            {% else %}
+                <input type="hidden" name="rol" value="">
             {% endif %}
 
             <fieldset>
