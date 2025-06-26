@@ -3,31 +3,38 @@
 {% block title %}Editar Concepto de Gasto - Gestor de Gastos{% endblock %}
 
 {% block content %}
-    <article> <h1 style="text-align: center;">Editar Concepto de Gasto Vario</h1>
+<div class="bg-white p-6 md:p-8 rounded-2xl card-shadow mb-8 fade-in max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Editar Concepto de Gasto</h1>
+        <p class="text-gray-500 mt-1">Modifica los detalles del concepto.</p>
+    </div>
 
-        <form method="POST" action="{{ url_for('editar_concepto', id=concepto.id) }}">
-            <div class="grid"> <label for="nombre_concepto">
-                    Nombre del Concepto
-                    <input type="text" id="nombre_concepto" name="nombre_concepto" value="{{ concepto.nombre_concepto }}" required>
-                </label>
+    <form method="POST" action="{{ url_for('editar_concepto', id=concepto.id) }}" class="space-y-6">
+        <div>
+            <label for="nombre_concepto" class="block text-sm font-medium text-gray-700">Nombre del Concepto</label>
+            <input type="text" id="nombre_concepto" name="nombre_concepto" value="{{ concepto.nombre_concepto }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
 
-                <label for="descripcion_concepto">
-                    Descripción del Concepto (Opcional)
-                    <textarea id="descripcion_concepto" name="descripcion_concepto" rows="3">{{ concepto.descripcion_concepto if concepto.descripcion_concepto }}</textarea>
-                </label>
-            </div>
+        <div>
+            <label for="descripcion_concepto" class="block text-sm font-medium text-gray-700">Descripción</label>
+            <textarea id="descripcion_concepto" name="descripcion_concepto" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ concepto.descripcion_concepto or '' }}</textarea>
+        </div>
 
-            <fieldset>
-                <label for="activo">
-                    <input type="checkbox" id="activo" name="activo" value="true" role="switch" {% if concepto.activo %}checked{% endif %}>
-                    Activo
-                </label>
-            </fieldset>
+        <div class="flex items-center">
+            <input type="checkbox" id="activo" name="activo" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {% if concepto.activo %}checked{% endif %}>
+            <label for="activo" class="ml-2 block text-sm text-gray-900">
+                Activo
+            </label>
+        </div>
 
-            <footer style="display: flex; justify-content: flex-end; gap: 1rem;">
-                <a href="{{ url_for('listar_conceptos') }}" role="button" class="secondary outline">Cancelar</a>
-                <button type="submit">Actualizar Concepto</button>
-            </footer>
-        </form>
-    </article>
+        <div class="flex justify-end gap-4 pt-4">
+            <a href="{{ url_for('listar_conceptos') }}" class="py-2 px-4 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Cancelar
+            </a>
+            <button type="submit" class="py-2 px-4 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Actualizar Concepto
+            </button>
+        </div>
+    </form>
+</div>
 {% endblock %}

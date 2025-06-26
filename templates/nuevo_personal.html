@@ -3,56 +3,66 @@
 {% block title %}Agregar Personal - Gestor de Gastos{% endblock %}
 
 {% block content %}
-    <article>
-        <h1 style="text-align: center;">Añadir Nueva Persona al Staff</h1>
+<div class="bg-white p-6 md:p-8 rounded-2xl card-shadow mb-8 fade-in max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Añadir Nuevo Personal</h1>
+        <p class="text-gray-500 mt-1">Introduce los detalles del nuevo miembro del personal.</p>
+    </div>
 
-        <form method="POST" action="{{ url_for('crear_personal') }}">
+    <form method="POST" action="{{ url_for('crear_personal') }}" class="space-y-6">
+        <div>
+            <label for="nombre_completo" class="block text-sm font-medium text-gray-700">Nombre Completo</label>
+            <input type="text" id="nombre_completo" name="nombre_completo" required placeholder="Ej: Juan Pérez" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
 
-            <div class="grid">
-                <label for="nombre_completo">
-                    Nombre Completo
-                    <input type="text" id="nombre_completo" name="nombre_completo" placeholder="Ej: Juan Pérez" required>
-                </label>
-                <label for="documento_identidad">
-                    Documento de Identidad
-                    <input type="text" id="documento_identidad" name="documento_identidad" placeholder="Ej: 1234567" required>
-                </label>
-            </div>
+        <div>
+            <label for="documento_identidad" class="block text-sm font-medium text-gray-700">Documento de Identidad</label>
+            <input type="text" id="documento_identidad" name="documento_identidad" required placeholder="Ej: 1234567" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
 
-            <label for="email">
-                Email (Opcional, si usa Google Login)
-                <input type="email" id="email" name="email" placeholder="ejemplo@srlpunto.com">
+        <div>
+            <label for="cargo" class="block text-sm font-medium text-gray-700">Cargo (opcional)</label>
+            <input type="text" id="cargo" name="cargo" placeholder="Ej: Administrador" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+
+        <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">Email (opcional, para login con Google)</label>
+            <input type="email" id="email" name="email" placeholder="ejemplo@srlpunto.com" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+
+        {% if current_user.rol == 'Administrador' %}
+        <div>
+            <label for="rol" class="block text-sm font-medium text-gray-700">Rol</label>
+            <select id="rol" name="rol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <option value="">Ninguno</option>
+                <option value="Contador">Contador</option>
+                <option value="Administrador">Administrador</option>
+            </select>
+        </div>
+        {% else %}
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+            <p class="text-sm text-gray-700">
+                <strong class="font-semibold">Nota:</strong> Solo los administradores pueden asignar roles.
+            </p>
+            <input type="hidden" name="rol" value=""> {# Asegura que el campo rol se envíe vacío si no es admin #}
+        </div>
+        {% endif %}
+
+        <div class="flex items-center">
+            <input type="checkbox" id="activo" name="activo" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+            <label for="activo" class="ml-2 block text-sm text-gray-900">
+                Activo
             </label>
+        </div>
 
-            <label for="cargo">
-                Cargo (Opcional)
-                <input type="text" id="cargo" name="cargo" placeholder="Ej: Administrador">
-            </label>
-
-            {% if current_user.rol == 'Administrador' %}
-                <label for="rol">
-                    Rol
-                    <select id="rol" name="rol"> {# <-- ASEGÚRATE DE QUE 'required' NO ESTÉ AQUÍ #}
-                        <option value="">Sin Rol</option> {# Opción para "Sin Rol" #}
-                        <option value="Contador">Contador</option>
-                        <option value="Administrador">Administrador</option>
-                    </select>
-                </label>
-            {% else %}
-                <input type="hidden" name="rol" value="">
-            {% endif %}
-
-            <fieldset>
-                <label for="activo">
-                    <input type="checkbox" id="activo" name="activo" value="true" role="switch" checked>
-                    Activo
-                </label>
-            </fieldset>
-
-            <footer style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-                <a href="{{ url_for('listar_personal') }}" role="button" class="secondary outline">Cancelar</a>
-                <button type="submit">Guardar Persona</button>
-            </footer>
-        </form>
-    </article>
+        <div class="flex justify-end gap-4 pt-4">
+            <a href="{{ url_for('listar_personal') }}" class="py-2 px-4 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Cancelar
+            </a>
+            <button type="submit" class="py-2 px-4 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Guardar Personal
+            </button>
+        </div>
+    </form>
+</div>
 {% endblock %}
