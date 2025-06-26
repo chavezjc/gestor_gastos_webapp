@@ -3,45 +3,59 @@
 {% block title %}Dashboard - Gestor de Gastos{% endblock %}
 
 {% block content %}
-    <h1>Dashboard Principal</h1>
-    <p>Resumen de documentos que requieren acción.</p>
+<div class="bg-white p-4 sm:p-6 rounded-2xl card-shadow mb-8 fade-in">
+    <div class="mb-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Dashboard Principal</h1>
+        <p class="text-gray-600 mt-1">Resumen de documentos que requieren acción.</p>
+    </div>
 
-    <div class="grid"> <article style="text-align: center;">
-            <h2 style="font-size: 2.5rem; margin-bottom: 0;">{{ num_por_rendir }}</h2>
-            <p style="margin-top: 0;">Documentos por Rendir</p>
-        </article>
-        <article style="text-align: center;">
-            <h2 style="font-size: 2.5rem; margin-bottom: 0;">{{ "%.2f"|format(saldo_total_por_rendir) }} bs.</h2>
-            <p style="margin-top: 0;">Saldo Total por Rendir</p>
-        </article>
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-center">
+        <div class="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+            <span class="text-4xl font-extrabold text-yellow-800">{{ num_por_rendir }}</span>
+            <p class="text-sm font-medium text-yellow-600 mt-2 uppercase tracking-wider">Documentos por Rendir</p>
+        </div>
+        <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
+            <span class="text-4xl font-extrabold text-blue-800">{{ "%.2f"|format(saldo_total_por_rendir) }} bs.</span>
+            <p class="text-sm font-medium text-blue-600 mt-2 uppercase tracking-wider">Saldo Total por Rendir</p>
+        </div>
     </div>
 
     {% if documentos_a_revisar %}
-        <h2 style="margin-top: 2rem;">Documentos Pendientes o Parcialmente Rendidos</h2>
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
+        <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">Documentos Pendientes o Parcialmente Rendidos</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white responsive-table">
+                <thead class="bg-gray-800 text-white">
                     <tr>
-                        <th>ID</th>
-                        <th>Tipo</th>
-                        <th>Número</th>
-                        <th>Fecha Emisión</th>
-                        <th>Monto Total</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Tipo / Número</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Fecha Emisión</th>
+                        <th class="text-right py-3 px-4 uppercase font-semibold text-sm">Monto Total (bs)</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Estado</th>
+                        <th class="text-center py-3 px-4 uppercase font-semibold text-sm">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="text-gray-700">
                     {% for doc in documentos_a_revisar %}
                     <tr>
-                        <td data-label="ID">{{ doc.id }}</td>
-                        <td data-label="Tipo">{{ doc.tipo_documento }}</td>
-                        <td data-label="Número">{{ doc.numero_documento }}</td>
-                        <td data-label="Fecha Emisión">{{ doc.fecha_emision.strftime('%d/%m/%Y') if doc.fecha_emision else 'N/A' }}</td>
-                        <td data-label="Monto Total">{{ "%.2f"|format(doc.monto_total_documento) if doc.monto_total_documento is not none else 'N/A' }} bs.</td>
-                        <td data-label="Estado">{{ doc.estado_documento }}</td>
-                        <td class="actions" data-label="Acciones">
-                            <a href="{{ url_for('ver_documento_items', documento_id=doc.id) }}" role="button" class="secondary outline">Ver/Añadir Ítems</a>
+                        <td data-label="Documento" class="py-3 px-4">
+                            <span class="font-semibold">{{ doc.tipo_documento }}</span><br>
+                            <span class="text-sm text-gray-500">#{{ doc.numero_documento }}</span>
+                        </td>
+                        <td data-label="Fecha Emisión" class="py-3 px-4">{{ doc.fecha_emision.strftime('%d/%m/%Y') if doc.fecha_emision else 'N/A' }}</td>
+                        <td data-label="Monto (bs)" class="py-3 px-4 text-right font-semibold">{{ "%.2f"|format(doc.monto_total_documento) if doc.monto_total_documento is not none else 'N/A' }}</td>
+                        <td data-label="Estado" class="py-3 px-4">
+                            {% set estado_color = {
+                                'Pendiente': 'bg-yellow-200 text-yellow-800',
+                                'Parcialmente Rendido': 'bg-blue-200 text-blue-800',
+                                'Rendido': 'bg-green-200 text-green-800',
+                                'Anulado': 'bg-red-200 text-red-800'
+                            } %}
+                            <span class="px-2 py-1 font-semibold leading-tight rounded-full text-xs {{ estado_color.get(doc.estado_documento, 'bg-gray-200 text-gray-800') }}">
+                                {{ doc.estado_documento }}
+                            </span>
+                        </td>
+                        <td data-label="Acciones" class="py-3 px-4 text-center">
+                            <a href="{{ url_for('ver_documento_items', documento_id=doc.id) }}" class="inline-flex items-center px-3 py-1.5 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">Ver/Añadir Ítems</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -49,10 +63,10 @@
             </table>
         </div>
     {% else %}
-        <article>
-            <h3>¡Todo al día!</h3>
+        <div class="bg-green-50 border-l-4 border-green-400 text-green-700 p-4 mt-6" role="alert">
+            <p class="font-bold">¡Todo al día!</p>
             <p>No tienes documentos pendientes o parcialmente rendidos en este momento.</p>
-        </article>
+        </div>
     {% endif %}
-
+</div>
 {% endblock %}

@@ -3,36 +3,147 @@
 {% block title %}Detalle Documento #{{ documento.numero_documento }} - Gestor de Gastos{% endblock %}
 
 {% block content %}
-    
-    <article>
-        <header>
-            <h1 style="text-align: center;">Detalle del Documento a Rendir</h1>
-        </header>
-        
-        <div class="grid">
-            <div><strong>ID Documento:</strong> {{ documento.id }}</div>
-            <div><strong>Tipo:</strong> {{ documento.tipo_documento }}</div>
-            <div><strong>Número:</strong> {{ documento.numero_documento }}</div>
-            <div><strong>Fecha Emisión:</strong> {{ documento.fecha_emision.strftime('%d/%m/%Y') if documento.fecha_emision else 'N/A' }}</div>
+<div class="bg-white p-4 sm:p-6 rounded-2xl card-shadow mb-8 fade-in">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Detalle del Documento a Rendir</h1>
+        <a href="{{ url_for('crear_item_gasto', documento_id=documento.id) }}" class="mt-4 md:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Añadir Nuevo Ítem
+        </a>
+    </div>
+
+    <!-- Document Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 text-gray-700">
+        <div class="bg-gray-50 p-3 rounded-lg">
+            <strong class="block text-sm text-gray-500">ID Documento:</strong>
+            <span class="text-lg font-semibold">{{ documento.id }}</span>
         </div>
-        <div class="grid">
-            <div><strong>Monto Total:</strong> {{ "%.2f"|format(documento.monto_total_documento) if documento.monto_total_documento is not none else 'No especificado' }} bs.</div>
-            <div><strong>Estado:</strong> {{ documento.estado_documento }}</div>
+        <div class="bg-gray-50 p-3 rounded-lg">
+            <strong class="block text-sm text-gray-500">Tipo / Número:</strong>
+            <span class="text-lg font-semibold">{{ documento.tipo_documento }} #{{ documento.numero_documento }}</span>
         </div>
-        {% if documento.descripcion_general %}
-        <p><strong>Descripción General:</strong> {{ documento.descripcion_general }}</p>
-        {% endif %}
-        
-        <footer>
-            <div class="grid">
-                <div><strong>Suma de Ítems:</strong><br>{{ "%.2f"|format(suma_items_registrados) }} bs.</div>
-                <div><strong>Saldo Pendiente:</strong><br>
-                    {% if documento.monto_total_documento is not none %}
-                        {{ "%.2f"|format(saldo_por_rendir) }} bs.
-                    {% else %}
-                        N/A
-                    {% endif %}
-                </div>
+        <div class="bg-gray-50 p-3 rounded-lg">
+            <strong class="block text-sm text-gray-500">Fecha Emisión:</strong>
+            <span class="text-lg font-semibold">{{ documento.fecha_emision.strftime('%d/%m/%Y') if documento.fecha_emision else 'N/A' }}</span>
+        </div>
+        <div class="bg-blue-50 p-3 rounded-lg">
+            <strong class="block text-sm text-blue-500">Monto Total Documento:</strong>
+            <span class="text-xl font-bold text-blue-800">{{ "%.2f"|format(documento.monto_total_documento) if documento.monto_total_documento is not none else 'No especificado' }} bs.</span>
+        </div>
+        <div class="bg-green-50 p-3 rounded-lg">
+            <strong class="block text-sm text-green-500">Suma de Ítems Rendidos:</strong>
+            <span class="text-xl font-bold text-green-800">{{ "%.2f"|format(suma_items_registrados) }} bs.</span>
+        </div>
+        <div class="bg-yellow-50 p-3 rounded-lg">
+            <strong class="block text-sm text-yellow-500">Saldo Pendiente por Rendir:</strong>
+            <span class="text-xl font-bold text-yellow-800">
+                {% if documento.monto_total_documento is not none %}
+                    {{ "%.2f"|format(saldo_por_rendir) }} bs.
+                {% else %}
+                    N/A
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    {% if documento.descripcion_general %}
+    <div class="bg-gray-50 p-3 rounded-lg mb-6">
+        <strong class="block text-sm text-gray-500">Descripción General:</strong>
+        <p class="text-gray-700">{{ documento.descripcion_general }}</p>
+    </div>
+    {% endif %}
+
+    <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">Ítems de Gasto Asociados</h2>
+
+    {% if items_lista %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white responsive-table">
+                <thead class="bg-gray-800 text-white">
+                    <tr>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm rounded-tl-lg">Fecha</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Descripción</th>
+                        <th class="text-right py-3 px-4 uppercase font-semibold text-sm">Monto</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Categoría</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Beneficiario/Concepto</th>
+                        <th class="text-center py-3 px-4 uppercase font-semibold text-sm rounded-tr-lg">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700">
+                    {% for item in items_lista %}
+                    <tr class="border-b border-gray-200">
+                        <td data-label="Fecha" class="py-3 px-4">{{ item.fecha_item.strftime('%d/%m/%Y') if item.fecha_item else 'N/A' }}</td>
+                        <td data-label="Descripción" class="py-3 px-4 font-semibold">{{ item.descripcion_item }}</td>
+                        <td data-label="Monto" class="py-3 px-4 text-right font-bold text-blue-600">{{ "%.2f"|format(item.monto_item) }} bs.</td>
+                        <td data-label="Categoría" class="py-3 px-4">{{ item.categoria.nombre_categoria if item.categoria else 'N/A' }}</td>
+                        <td data-label="Beneficiario/Concepto" class="py-3 px-4 text-sm">
+                            {% if item.persona %}
+                                <span class="font-medium">Personal:</span> {{ item.persona.nombre_completo }}
+                            {% elif item.proveedor %}
+                                <span class="font-medium">Prov/Serv:</span> {{ item.proveedor.nombre_proveedor_servicio }}
+                            {% elif item.concepto_vario %}
+                                <span class="font-medium">Concepto:</span> {{ item.concepto_vario.nombre_concepto }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td data-label="Acciones" class="py-3 px-4 text-center">
+                            <div class="action-buttons-group">
+                                <a href="{{ url_for('editar_item_gasto', item_id=item.id) }}" class="text-indigo-600 hover:text-indigo-900" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></a>
+                                <form action="{{ url_for('eliminar_item_gasto', item_id=item.id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este ítem?');" class="inline-block">
+                                    <button type="submit" class="text-red-600 hover:text-red-900" title="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4" role="alert">
+            <p class="font-bold">Sin ítems registrados</p>
+            <p>Este documento no tiene ítems de gasto registrados todavía.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Este script es para el formulario de nuevo/editar ítem, no para la tabla de listado.
+        // Se mantiene aquí por si se reutiliza en otras vistas o si se mueve el formulario a un modal.
+        // Si este script no es necesario en esta vista, se puede eliminar.
+        const selects = document.querySelectorAll('.detalle-especifico-select');
+
+        function manejarCambioDeSelect(evento) {
+            const selectActual = evento.target;
+            const haySeleccion = selectActual.value !== '';
+
+            selects.forEach(function(otroSelect) {
+                if (otroSelect !== selectActual) {
+                    otroSelect.disabled = haySeleccion;
+                    if (haySeleccion) {
+                        otroSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    } else {
+                        otroSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                    }
+                }
+            });
+        }
+
+        selects.forEach(function(select) {
+            select.addEventListener('change', manejarCambioDeSelect);
+            // Initial check in case a value is pre-selected
+            if (select.value !== '') {
+                manejarCambioDeSelect({ target: select });
+            }
+        });
+    });
+</script>
+{% endblock %}
             </div>
         </footer>
     </article>

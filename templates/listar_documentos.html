@@ -1,56 +1,67 @@
 {% extends "base.html" %}
 
-{% block title %}Listado de Documentos - Gestor de Gastos{% endblock %}
+{% block title %}Documentos a Rendir{% endblock %}
 
 {% block content %}
-    <h1>Listado de Documentos a Rendir (Cheques/Transferencias)</h1>
-
-    <div style="margin-bottom: 20px;">
-        <a href="{{ url_for('crear_documento') }}" role="button">Agregar Nuevo Documento</a>
+<div class="bg-white p-4 sm:p-6 rounded-2xl card-shadow mb-8 fade-in">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Documentos a Rendir</h1>
+        <a href="{{ url_for('crear_documento') }}" class="mt-4 md:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Añadir Documento
+        </a>
     </div>
 
-    {% if documentos_lista %}
-        <div style="overflow-x:auto;"> <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Tipo</th>
-                        <th>Número</th>
-                        <th>Fecha Emisión</th>
-                        <th>Monto Total</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for doc in documentos_lista %}
-                    <tr>
-                        <td data-label="ID">{{ doc.id }}</td>
-                        <td data-label="Tipo">{{ doc.tipo_documento }}</td>
-                        <td data-label="Número">{{ doc.numero_documento }}</td>
-                        <td data-label="Fecha Emisión">{{ doc.fecha_emision.strftime('%d/%m/%Y') if doc.fecha_emision else 'N/A' }}</td>
-                        <td data-label="Monto Total">{{ "%.2f"|format(doc.monto_total_documento) if doc.monto_total_documento is not none else 'N/A' }} bs.</td>
-                        <td data-label="Estado">{{ doc.estado_documento }}</td>
-                        <td class="actions" data-label="Acciones">
-                            <div class="action-buttons-group">
-                                <a href="{{ url_for('ver_documento_items', documento_id=doc.id) }}" role="button" class="secondary outline">Ver Ítems</a>
-                                <a href="{{ url_for('editar_documento', id=doc.id) }}" role="button" class="secondary outline">Editar</a>
-                                <form action="{{ url_for('eliminar_documento', id=doc.id) }}" method="POST" style="display:inline; margin:0;">
-                                    <button type="submit" class="contrast" onclick="return confirm('¿Estás seguro de que quieres eliminar este documento y todos sus ítems asociados?');">Eliminar</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <article>
-            No hay documentos a rendir registrados todavía.
-            <br><br>
-            <a href="{{ url_for('crear_documento') }}" role="button">Agregar el primero</a>
-        </article>
-    {% endif %}
-
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white responsive-table">
+            <thead class="bg-gray-800 text-white">
+                <tr>
+                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Tipo / Número</th>
+                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Fecha Emisión</th>
+                    <th class="text-right py-3 px-4 uppercase font-semibold text-sm">Monto Total (bs)</th>
+                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Estado</th>
+                    <th class="text-center py-3 px-4 uppercase font-semibold text-sm">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-700">
+                {% for doc in documentos_lista %}
+                <tr class="border-b border-gray-200">
+                    <td data-label="Documento" class="py-3 px-4">
+                        <span class="font-semibold">{{ doc.tipo_documento }}</span><br>
+                        <span class="text-sm text-gray-500">#{{ doc.numero_documento }}</span>
+                    </td>
+                    <td data-label="Fecha Emisión" class="py-3 px-4">{{ doc.fecha_emision.strftime('%d/%m/%Y') }}</td>
+                    <td data-label="Monto (bs)" class="py-3 px-4 text-right font-semibold">{{ "%.2f"|format(doc.monto_total_documento) if doc.monto_total_documento is not none else 'N/A' }}</td>
+                    <td data-label="Estado" class="py-3 px-4">
+                        {% set estado_color = {
+                            'Pendiente': 'bg-yellow-200 text-yellow-800',
+                            'Parcialmente Rendido': 'bg-blue-200 text-blue-800',
+                            'Rendido': 'bg-green-200 text-green-800',
+                            'Anulado': 'bg-red-200 text-red-800'
+                        } %}
+                        <span class="px-2 py-1 font-semibold leading-tight rounded-full text-xs {{ estado_color.get(doc.estado_documento, 'bg-gray-200 text-gray-800') }}">
+                            {{ doc.estado_documento }}
+                        </span>
+                    </td>
+                    <td data-label="Acciones" class="py-3 px-4 text-center">
+                        <div class="action-buttons-group">
+                            <a href="{{ url_for('ver_documento_items', documento_id=doc.id) }}" class="text-green-600 hover:text-green-900" title="Ver Ítems"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg></a>
+                            <a href="{{ url_for('editar_documento', id=doc.id) }}" class="text-indigo-600 hover:text-indigo-900" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></a>
+                            <form action="{{ url_for('eliminar_documento', id=doc.id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este documento y todos sus ítems?');" class="inline-block">
+                                <button type="submit" class="text-red-600 hover:text-red-900" title="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-4">No hay documentos para mostrar.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

@@ -3,127 +3,131 @@
 {% block title %}Nuevo Ítem de Gasto - Gestor de Gastos{% endblock %}
 
 {% block content %}
-    <article>
-        <header>
-            <h1 style="text-align: center;">Añadir Ítem de Gasto</h1>
-            <p style="text-align: center; margin-top: -1.5rem; color: var(--muted-color);">
-                Para Documento: {{ documento.tipo_documento }} #{{ documento.numero_documento }}
-            </p>
-        </header>
+<div class="bg-white p-6 md:p-8 rounded-2xl card-shadow mb-8 fade-in max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Añadir Ítem de Gasto</h1>
+        <p class="text-gray-500 mt-1">
+            Para Documento: <span class="font-semibold text-blue-600">{{ documento.tipo_documento }} #{{ documento.numero_documento }}</span>
+        </p>
+    </div>
 
-        <div class="grid" style="margin-bottom: 2rem;">
-            <div style="background-color: var(--code-background-color); padding: 1rem; border-radius: var(--border-radius);">
-                <strong>Monto Total del Documento:</strong><br>
-                {{ "%.2f"|format(monto_total_doc) if monto_total_doc is not none else 'No especificado' }} bs.
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-center">
+        <div class="bg-gray-100 p-4 rounded-lg">
+            <span class="text-sm font-medium text-gray-500">Monto Total Doc.</span>
+            <p class="text-xl font-bold text-gray-800">{{ "%.2f"|format(monto_total_doc) if monto_total_doc is not none else 'N/A' }} bs.</p>
+        </div>
+        <div class="bg-blue-50 p-4 rounded-lg">
+            <span class="text-sm font-medium text-blue-500">Total Rendido</span>
+            <p class="text-xl font-bold text-blue-800">{{ "%.2f"|format(suma_ya_rendida) }} bs.</p>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg">
+            <span class="text-sm font-medium text-green-500">Saldo Pendiente</span>
+            <p class="text-xl font-bold text-green-800">
+                {% if monto_total_doc is not none %}{{ "%.2f"|format(saldo_pendiente) }} bs.{% else %}N/A{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('crear_item_gasto', documento_id=documento.id) }}" class="space-y-6">
+        
+        <div>
+            <label for="descripcion_item" class="block text-sm font-medium text-gray-700">Descripción del Ítem</label>
+            <textarea id="descripcion_item" name="descripcion_item" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ descripcion_item_prev or '' }}</textarea>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="monto_item" class="block text-sm font-medium text-gray-700">Monto del Ítem (bs.)</label>
+                <input type="number" id="monto_item" name="monto_item" step="0.01" min="0.01" value="{{ monto_item_prev or '' }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </div>
-            <div style="background-color: var(--code-background-color); padding: 1rem; border-radius: var(--border-radius);">
-                <strong>Suma de Ítems Registrados:</strong><br>
-                {{ "%.2f"|format(suma_ya_rendida) }} bs.
-            </div>
-            <div style="background-color: var(--code-background-color); padding: 1rem; border-radius: var(--border-radius);">
-                <strong>Saldo Pendiente por Rendir:</strong><br>
-                {% if monto_total_doc is not none %}
-                    {{ "%.2f"|format(saldo_pendiente) }} bs.
-                {% else %}
-                    N/A
-                {% endif %}
+            <div>
+                <label for="fecha_item" class="block text-sm font-medium text-gray-700">Fecha del Ítem</label>
+                <input type="date" id="fecha_item" name="fecha_item" value="{{ fecha_item_prev or '' }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </div>
         </div>
 
-        <form method="POST" action="{{ url_for('crear_item_gasto', documento_id=documento.id) }}">
-            
-            <label for="descripcion_item">
-                Descripción del Ítem
-                <textarea id="descripcion_item" name="descripcion_item" rows="3" required>{{ descripcion_item_prev if descripcion_item_prev }}</textarea>
-            </label>
-            
-            <div class="grid">
-                <label for="monto_item">
-                    Monto del Ítem (bs.)
-                    <input type="number" id="monto_item" name="monto_item" step="0.01" min="0.01" value="{{ monto_item_prev if monto_item_prev }}" required>
-                </label>
-                <label for="fecha_item">
-                    Fecha del Ítem
-                    <input type="date" id="fecha_item" name="fecha_item" value="{{ fecha_item_prev if fecha_item_prev else '' }}" required>
-                </label>
+        <div>
+            <label for="categoria_principal_id" class="block text-sm font-medium text-gray-700">Categoría Principal</label>
+            <select id="categoria_principal_id" name="categoria_principal_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <option value="" disabled {% if not categoria_prev %}selected{% endif %}>Seleccione una categoría...</option>
+                {% for cat in categorias %}
+                    <option value="{{ cat.id }}" {% if categoria_prev and categoria_prev|string == cat.id|string %}selected{% endif %}>{{ cat.nombre_categoria }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Detalle Específico (Opcional)</h3>
+            <p class="text-sm text-gray-500 mb-4">Seleccione solo una de las siguientes opciones para detallar el gasto.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="personal_id" class="block text-sm font-medium text-gray-700">Personal</label>
+                    <select id="personal_id" name="personal_id" class="detalle-especifico-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">Ninguno</option>
+                        {% for p in personal_lista %}
+                            <option value="{{ p.id }}" {% if personal_prev and personal_prev|string == p.id|string %}selected{% endif %}>{{ p.nombre_completo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="proveedor_servicio_id" class="block text-sm font-medium text-gray-700">Proveedor/Servicio</label>
+                    <select id="proveedor_servicio_id" name="proveedor_servicio_id" class="detalle-especifico-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">Ninguno</option>
+                        {% for prov in proveedores_lista %}
+                            <option value="{{ prov.id }}" {% if proveedor_prev and proveedor_prev|string == prov.id|string %}selected{% endif %}>{{ prov.nombre_proveedor_servicio }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="concepto_gasto_vario_id" class="block text-sm font-medium text-gray-700">Concepto Vario</label>
+                    <select id="concepto_gasto_vario_id" name="concepto_gasto_vario_id" class="detalle-especifico-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">Ninguno</option>
+                        {% for con in conceptos_lista %}
+                            <option value="{{ con.id }}" {% if concepto_prev and concepto_prev|string == con.id|string %}selected{% endif %}>{{ con.nombre_concepto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-
-            <label for="categoria_principal_id">
-                Categoría Principal
-                <select id="categoria_principal_id" name="categoria_principal_id" required>
-                    <option value="" disabled {% if not categoria_prev %}selected{% endif %}>Seleccione una categoría...</option>
-                    {% for cat in categorias %}
-                        <option value="{{ cat.id }}" {% if categoria_prev and categoria_prev|string == cat.id|string %}selected{% endif %}>{{ cat.nombre_categoria }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-
-            <details>
-                <summary>Detalle Específico (Opcional)</summary>
-                <div class="grid">
-                    <label for="personal_id">
-                        Personal
-                        <select id="personal_id" name="personal_id" class="detalle-especifico-select"> <option value="">Ninguno</option>
-                            {% for p in personal_lista %}
-                                <option value="{{ p.id }}" {% if personal_prev and personal_prev|string == p.id|string %}selected{% endif %}>{{ p.nombre_completo }}</option>
-                            {% endfor %}
-                        </select>
-                    </label>
-                    <label for="proveedor_servicio_id">
-                        Proveedor/Servicio
-                        <select id="proveedor_servicio_id" name="proveedor_servicio_id" class="detalle-especifico-select"> <option value="">Ninguno</option>
-                            {% for prov in proveedores_lista %}
-                                <option value="{{ prov.id }}" {% if proveedor_prev and proveedor_prev|string == prov.id|string %}selected{% endif %}>{{ prov.nombre_proveedor_servicio }}</option>
-                            {% endfor %}
-                        </select>
-                    </label>
-                    <label for="concepto_gasto_vario_id">
-                        Concepto Vario
-                        <select id="concepto_gasto_vario_id" name="concepto_gasto_vario_id" class="detalle-especifico-select"> <option value="">Ninguno</option>
-                            {% for con in conceptos_lista %}
-                                <option value="{{ con.id }}" {% if concepto_prev and concepto_prev|string == con.id|string %}selected{% endif %}>{{ con.nombre_concepto }}</option>
-                            {% endfor %}
-                        </select>
-                    </label>
-                </div>
-            </details>
-            
-            <footer>
-                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-                    <a href="{{ url_for('ver_documento_items', documento_id=documento.id) }}" role="button" class="secondary outline">Cancelar</a>
-                    <button type="submit">Guardar Ítem de Gasto</button>
-                </div>
-            </footer>
-        </form>
-    </article>
+        </div>
+        
+        <div class="flex justify-end gap-4 pt-4">
+            <a href="{{ url_for('ver_documento_items', documento_id=documento.id) }}" class="py-2 px-4 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancelar</a>
+            <button type="submit" class="py-2 px-4 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Guardar Ítem</button>
+        </div>
+    </form>
+</div>
 {% endblock %}
 
 
 {% block scripts %}
+{{ super() }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Seleccionamos los tres menús desplegables por su clase común
         const selects = document.querySelectorAll('.detalle-especifico-select');
 
-        // Definimos la función que manejará el cambio
         function manejarCambioDeSelect(evento) {
             const selectActual = evento.target;
             const haySeleccion = selectActual.value !== '';
 
-            // Recorremos TODOS los desplegables de nuevo
             selects.forEach(function(otroSelect) {
-                // Si este desplegable NO es el que el usuario cambió...
                 if (otroSelect !== selectActual) {
-                    // ...lo deshabilitamos si el usuario hizo una selección,
-                    // o lo habilitamos si el usuario seleccionó "Ninguno".
                     otroSelect.disabled = haySeleccion;
+                    if (haySeleccion) {
+                        otroSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    } else {
+                        otroSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                    }
                 }
             });
         }
 
-        // Añadimos un "escuchador de eventos" a cada desplegable.
         selects.forEach(function(select) {
             select.addEventListener('change', manejarCambioDeSelect);
+            // Initial check in case a value is pre-selected
+            if (select.value !== '') {
+                manejarCambioDeSelect({ target: select });
+            }
         });
     });
 </script>

@@ -3,59 +3,72 @@
 {% block title %}Informe de Gastos por Categoría - Gestor de Gastos{% endblock %}
 
 {% block content %}
-<article>
-    <h1 style="text-align: center;">Informe de Gastos por Categoría</h1>
-    <p>Seleccione un rango de fechas para generar el informe de gastos agrupados por categoría principal.</p>
+<div class="bg-white p-4 sm:p-6 rounded-2xl card-shadow mb-8 fade-in">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Informe de Gastos por Categoría</h1>
+    </div>
+    <p class="text-gray-600 mb-6">Seleccione un rango de fechas para generar el informe de gastos agrupados por categoría principal.</p>
 
-    <form method="POST" action="{{ url_for('informe_gastos_por_categoria') }}">
-        <div class="grid">
-            <label for="fecha_inicio">
-                Fecha de Inicio
-                <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio if fecha_inicio else '' }}" required>
-            </label>
-            <label for="fecha_fin">
-                Fecha de Fin
-                <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin if fecha_fin else '' }}" required>
-            </label>
+    <form method="POST" action="{{ url_for('informe_gastos_por_categoria') }}" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="fecha_inicio" class="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio if fecha_inicio else '' }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="fecha_fin" class="block text-sm font-medium text-gray-700">Fecha de Fin</label>
+                <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin if fecha_fin else '' }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+            </div>
         </div>
-        <button type="submit">Generar Informe</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+            Generar Informe
+        </button>
     </form>
 
-    <hr>
+    <hr class="my-8 border-gray-300">
 
     <div id="resultados-informe">
-        {% if resultados is not none %} {% if resultados %} <h2>Resultados para el período del {{ fecha_inicio }} al {{ fecha_fin }}</h2>
-                <div style="overflow-x:auto;">
-                    <table>
-                        <thead>
+        {% if resultados is not none %}
+            {% if resultados %}
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Resultados para el período del {{ fecha_inicio }} al {{ fecha_fin }}</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white responsive-table">
+                        <thead class="bg-gray-800 text-white">
                             <tr>
-                                <th>Categoría</th>
-                                <th style="text-align: right;">Monto Total</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm rounded-tl-lg">Categoría</th>
+                                <th class="text-right py-3 px-4 uppercase font-semibold text-sm rounded-tr-lg">Monto Total</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="text-gray-700">
                             {% for resultado in resultados %}
-                            <tr>
-                                <td>{{ resultado.nombre_categoria }}</td>
-                                <td style="text-align: right;">{{ "%.2f"|format(resultado.total_gastado) }} bs.</td>
+                            <tr class="border-b border-gray-200">
+                                <td data-label="Categoría" class="py-3 px-4 font-semibold">{{ resultado.nombre_categoria }}</td>
+                                <td data-label="Monto Total" class="py-3 px-4 text-right font-bold text-blue-600">{{ "%.2f"|format(resultado.total_gastado) }} bs.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
-                        <tfoot>
+                        <tfoot class="bg-gray-100 text-gray-800 font-bold">
                             <tr>
-                                <th style="text-align: right;">TOTAL GENERAL:</th>
-                                <th style="text-align: right;">{{ "%.2f"|format(total_informe) }} bs.</th>
+                                <th class="text-right py-3 px-4 uppercase font-semibold text-sm rounded-bl-lg">TOTAL GENERAL:</th>
+                                <th class="text-right py-3 px-4 uppercase font-semibold text-sm rounded-br-lg">{{ "%.2f"|format(total_informe) }} bs.</th>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
+                <p class="text-sm text-gray-500 mt-4">Nota: Los montos se muestran en bolivianos (bs.).</p>
             {% else %}
-                <p>No se encontraron gastos en el período seleccionado.</p>
+                <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4" role="alert">
+                    <p class="font-bold">Sin resultados</p>
+                    <p>No se encontraron gastos en el período seleccionado.</p>
+                </div>
             {% endif %}
-
-        {% else %} <p>Por favor, seleccione un rango de fechas y haga clic en "Generar Informe".</p>
+        {% else %}
+            <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4" role="alert">
+                <p class="font-bold">Generar Informe</p>
+                <p>Por favor, seleccione un rango de fechas y haga clic en "Generar Informe" para ver los resultados.</p>
+            </div>
         {% endif %}
     </div>
 
-</article>
+</div>
 {% endblock %}

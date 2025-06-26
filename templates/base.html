@@ -1,308 +1,222 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
     <title>{% block title %}Gestor de Gastos{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --nav-height: 56px; /* Altura de la barra de navegación */
-            --desktop-menu-max-height: 200px; /* Altura estimada máxima del menú desplegado en escritorio (ajustar si es necesario) */
-        }
         body {
-            /* Eliminamos padding-top del body */
+            font-family: 'Inter', sans-serif;
         }
-        nav.main-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 1rem;
-            height: var(--nav-height);
-            background-color: var(--card-background-color);
-            box-shadow: var(--card-box-shadow);
-            z-index: 100;
+        .gradient-bg {
+            background: linear-gradient(135deg, #0052D4, #4364F7, #6FB1FC);
         }
-        .nav-brand {
-            font-weight: bold;
-            font-size: 1.2rem;
-            text-decoration: none;
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        .nav-links-container ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            align-items: center;
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
         }
-        .nav-links-container ul li {
-             margin-left: 1rem;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .nav-links-container ul li a {
-            text-decoration: none;
-            padding: 0.5rem 0;
-            display: block;
+        .text-shadow {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
-
-        li.dropdown {
-            position: relative;
-        }
-        li.dropdown ul.dropdown-content {
-            display: none;
-            position: absolute;
-            top: calc(100% + 0.5rem); /* Espacio entre el nav y el dropdown */
-            left: 0;
-            background-color: var(--card-background-color);
-            border: 1px solid var(--card-border-color);
-            min-width: 220px;
-            box-shadow: var(--card-box-shadow);
-            z-index: 102; /* Más alto para asegurar visibilidad */
-            padding: 0;
-            border-radius: var(--border-radius);
-            list-style: none;
-        }
-        li.dropdown ul.dropdown-content li {
-            margin: 0;
-            padding: 0;
-            border-bottom: none;
-        }
-        li.dropdown ul.dropdown-content li a {
-            display: block;
-            padding: 0.5rem 1rem; /* Padding vertical para compacidad */
-            border-bottom: 1px solid var(--card-border-color);
-            text-decoration: none;
-            color: var(--pico-link-color);
-        }
-        li.dropdown ul.dropdown-content li a:hover {
-            background-color: var(--pico-form-element-background-color);
-        }
-        li.dropdown ul.dropdown-content li:last-child a {
-             border-bottom: none;
-        }
-        li.dropdown:hover > ul.dropdown-content {
-            display: block;
-        }
-
-        .flashes { list-style-type: none; padding: 0; margin-top: 1rem; }
-        .flashes li { padding: 0.75em 1.25em; margin-bottom: 1rem; border: 1px solid transparent; border-radius: var(--border-radius); }
+        /* Styles for flashed messages */
+        .flashes { list-style-type: none; padding: 0; margin: 0 0 1rem 0; }
+        .flashes li { padding: 0.75rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: 0.5rem; }
         .flash-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
         .flash-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
         .flash-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
         .flash-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
 
-        .action-buttons-group {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 0.5rem;
+        /* Custom dropdown for desktop nav */
+        .dropdown .dropdown-menu {
+            display: none;
+        }
+        .dropdown:hover .dropdown-menu {
+            display: block;
         }
 
-        .hamburger-button { display: none; }
-
-        main.container {
-            /* CAMBIO CLAVE: Aumentamos el padding-top para acomodar el dropdown en escritorio SIEMPRE */
-            padding-top: calc(var(--nav-height) + var(--desktop-menu-max-height) + 1.5rem); /* Altura de nav + altura máxima del dropdown + margen */
-            position: relative;
-            z-index: 1;
-        }
-
-
+        /* Responsive tables */
         @media screen and (max-width: 768px) {
-            nav.main-nav { flex-wrap: wrap; justify-content: space-between; }
-            .hamburger-button { display: block; background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--primary); }
-
-            .nav-links-container {
-                display: none;
-                position: absolute; /* Usamos absolute para que el menú móvil no ocupe espacio cuando está cerrado */
-                top: var(--nav-height);
-                left: 0;
-                width: 100%;
-                background-color: var(--card-background-color);
-                box-shadow: var(--card-box-shadow);
-                z-index: 99;
-                border-top: 1px solid var(--card-border-color);
-                flex-direction: column;
-                align-items: flex-start;
-                /* CAMBIO: Agregamos overflow-y: auto; y max-height para menús largos en móviles */
-                max-height: calc(100vh - var(--nav-height)); /* No sobrepasa la pantalla */
-                overflow-y: auto; /* Permite scroll si el menú es muy largo */
-            }
-            .nav-links-container.active {
-                display: flex;
-            }
-            .nav-links-container ul {
-                flex-direction: column;
-                width: 100%;
-                align-items: flex-start;
-            }
-            .nav-links-container ul li {
-                width: 100%;
-                margin: 0;
-                padding: 0;
-                border-bottom: none;
-            }
-            .nav-links-container ul li a {
-                padding: 0.75rem 1rem;
-                width: 100%;
-                border-bottom: 1px solid var(--card-border-color);
-            }
-            .nav-links-container ul li:last-child a {
-                 border-bottom: none;
-            }
-
-
-            /* Comportamiento del dropdown en móvil (toggle por JS) */
-            li.dropdown ul.dropdown-content {
-                display: none;
-                position: static; /* ESTO HACE QUE EMPUJE EL CONTENIDO EN MÓVIL */
-                box-shadow: none;
+            .responsive-table thead {
                 border: none;
-                background-color: var(--code-background-color);
-                padding-left: 1.5rem;
-                width: 100%;
-                margin: 0;
-                top: auto;
-                z-index: auto;
-            }
-            li.dropdown ul.dropdown-content.active-dropdown {
-                display: block;
-            }
-            li.dropdown ul.dropdown-content li {
-                margin: 0;
+                clip: rect(0 0 0 0);
+                height: 1px;
+                margin: -1px;
+                overflow: hidden;
                 padding: 0;
-                border-top: none;
+                position: absolute;
+                width: 1px;
+            }
+            .responsive-table tr {
+                display: block;
+                margin-bottom: 1.5em;
+                border-radius: 0.5rem; /* rounded-lg */
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+                background-color: #ffffff;
+                border: 1px solid #e5e7eb; /* border-gray-200 */
+            }
+            .responsive-table td {
+                display: block;
+                text-align: right;
+                border-bottom: 1px solid #e5e7eb; /* border-gray-200 */
+                padding: 0.75rem 1rem; /* py-3 px-4 */
+            }
+            .responsive-table td:last-child {
                 border-bottom: none;
             }
-            li.dropdown ul.dropdown-content li a {
-                padding: 0.75rem 0;
-                border-top: 1px solid var(--card-border-color);
-                border-bottom: none;
+            .responsive-table td::before {
+                content: attr(data-label);
+                float: left;
+                font-weight: 600; /* font-semibold */
+                text-transform: uppercase;
+                font-size: 0.75rem; /* text-xs */
+                color: #6b7280; /* text-gray-500 */
             }
-            li.dropdown ul.dropdown-content li:first-child a {
-                 border-top: none;
+            .responsive-table .action-buttons-group {
+                display: flex;
+                justify-content: flex-end; /* Align to the right with the label */
+                gap: 1rem;
+                padding-top: 0.5rem;
             }
-
-
-            /* Ajuste del padding-top del main.container cuando el menú móvil está abierto */
-            /* Este JS lo gestionará dinámicamente */
-            body.menu-open main.container {
-                 padding-top: calc(var(--nav-height) + 200px); /* Un valor grande inicial, JS lo ajustará */
-            }
-
-            /* Reglas de tabla para móvil (existentes) */
-            table thead { border: none; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
-            table, thead, tbody, th, td, tr { display: block; }
-            table tr { margin-bottom: 1.5em; border: 1px solid var(--card-border-color); border-radius: var(--border-radius); box-shadow: var(--card-box-shadow); background-color: var(--card-background-color); }
-            table td { display: block; text-align: right; border-bottom: 1px solid var(--card-border-color); padding: 1rem; }
-            table td::before { content: attr(data-label); float: left; font-weight: bold; text-transform: uppercase; color: var(--muted-color); }
-            table tr td:first-child { background-color: #435160; color: white; text-align: center; font-size: 1.25em; font-weight: bold; padding: 0.75rem; }
-            table tr td:first-child::before { content: ""; }
-            table td.actions { border-bottom: none; background-color: var(--code-background-color); }
-            .action-buttons-group { justify-content: center; }
         }
     </style>
 </head>
-<body>
-    <main class="container">
-        <nav class="main-nav">
-            <a href="{{ url_for('hello_world') }}" class="nav-brand">Gestor Gastos</a>
-            <button class="hamburger-button" id="hamburgerButton" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
-            <div class="nav-links-container" id="navLinksContainer">
+<body class="bg-gray-100 text-gray-800">
 
-                <ul>
-                    {% if current_user.is_authenticated %}
-                        {% if current_user.rol in ['Contador', 'Administrador'] %}
-                            <li><a href="{{ url_for('listar_documentos') }}">Documentos a Rendir</a></li>
-                            <li><a href="{{ url_for('informe_gastos_por_categoria') }}">Informes</a></li>
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <!-- Logo -->
+                    <div>
+                        <a href="{{ url_for('hello_world') }}" class="flex items-center py-4 px-2">
+                            <span class="font-extrabold text-blue-700 text-xl">Gestor Gastos</span>
+                        </a>
+                    </div>
+                    <!-- Primary Nav -->
+                    <div class="hidden md:flex items-center space-x-1">
+                        {% if current_user.is_authenticated %}
+                            {% if current_user.rol in ['Contador', 'Administrador'] %}
+                                <a href="{{ url_for('listar_documentos') }}" class="py-4 px-2 text-gray-500 font-semibold hover:text-blue-500 transition duration-300">Documentos</a>
+                                <a href="{{ url_for('informe_gastos_por_categoria') }}" class="py-4 px-2 text-gray-500 font-semibold hover:text-blue-500 transition duration-300">Informes</a>
+                            {% endif %}
+                            <!-- Dropdown -->
+                            <div class="relative dropdown">
+                                <button class="py-4 px-2 text-gray-500 font-semibold hover:text-blue-500 transition duration-300 flex items-center">
+                                    <span>Configuración</span>
+                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div class="dropdown-menu absolute left-0 mt-2 w-48 bg-white rounded-md shadow-xl z-20">
+                                    {% if current_user.rol == 'Administrador' %}
+                                        <a href="{{ url_for('listar_personal') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white">Personal</a>
+                                    {% endif %}
+                                    {% if current_user.rol in ['Contador', 'Administrador'] %}
+                                        <a href="{{ url_for('listar_proveedores') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white">Proveedores/Servicios</a>
+                                        <a href="{{ url_for('listar_conceptos') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white">Conceptos Varios</a>
+                                        <a href="{{ url_for('listar_categorias') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white">Categorías</a>
+                                    {% endif %}
+                                </div>
+                            </div>
                         {% endif %}
-
-                        <li class="dropdown">
-                            <a href="#" class="dropbtn" onclick="toggleConfigMenu(event)">Configuración &#9662;</a>
-                            <ul class="dropdown-content" id="configDropdown">
-                                {% if current_user.rol == 'Administrador' %}
-                                    <li><a href="{{ url_for('listar_personal') }}">Personal</a></li>
-                                {% endif %}
-                                {% if current_user.rol in ['Contador', 'Administrador'] %}
-                                    <li><a href="{{ url_for('listar_proveedores') }}">Proveedores/Servicios</a></li>
-                                    <li><a href="{{ url_for('listar_conceptos') }}">Conceptos Varios</a></li>
-                                    <li><a href="{{ url_for('listar_categorias') }}">Categorías</a></li>
-                                {% endif %}
-                            </ul>
-                        </li>
-                        <li><span>Hola, {{ current_user.nombre_completo }} ({% if current_user.rol %}{{ current_user.rol }}{% else %}Sin Rol{% endif %})</span></li>
-                        <li><a href="{{ url_for('logout') }}">Cerrar Sesión</a></li>
-                    {% else %}
-                        <li><a href="{{ url_for('login') }}">Iniciar Sesión con Google</a></li>
-                    {% endif %}
-                </ul>
+                    </div>
                 </div>
-        </nav>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <ul class="flashes">
-            {% for category, message in messages %}
-              <li class="flash-{{ category }}">{{ message }}</li>
-            {% endfor %}
+                <!-- Secondary Nav -->
+                <div class="hidden md:flex items-center space-x-3">
+                    {% if current_user.is_authenticated %}
+                        <span class="py-2 px-2 text-sm text-gray-500">Hola, {{ current_user.nombre_completo }} ({{ current_user.rol or 'Sin Rol' }})</span>
+                        <a href="{{ url_for('logout') }}" class="py-2 px-3 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300 shadow-md">Cerrar Sesión</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="py-2 px-3 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300 shadow-md">Iniciar Sesión</a>
+                    {% endif %}
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button class="outline-none mobile-menu-button">
+                        <svg class="w-6 h-6 text-gray-500 hover:text-blue-500" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M4 6h16M4 12h16m-7 6h7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div class="hidden mobile-menu">
+            <ul class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                {% if current_user.is_authenticated %}
+                    {% if current_user.rol in ['Contador', 'Administrador'] %}
+                        <li><a href="{{ url_for('listar_documentos') }}" class="block py-2 px-3 text-base font-medium text-gray-700 rounded-md hover:text-white hover:bg-blue-500">Documentos</a></li>
+                        <li><a href="{{ url_for('informe_gastos_por_categoria') }}" class="block py-2 px-3 text-base font-medium text-gray-700 rounded-md hover:text-white hover:bg-blue-500">Informes</a></li>
+                    {% endif %}
+                    
+                    <li><a href="#" class="mobile-config-toggle block py-2 px-3 text-base font-medium text-gray-700 rounded-md hover:text-white hover:bg-blue-500">Configuración &#9662;</a></li>
+                    <ul class="hidden mobile-config-menu pl-4">
+                        {% if current_user.rol == 'Administrador' %}
+                            <li><a href="{{ url_for('listar_personal') }}" class="block py-2 px-3 text-sm font-medium text-gray-600 rounded-md hover:text-white hover:bg-blue-400">Personal</a></li>
+                        {% endif %}
+                        {% if current_user.rol in ['Contador', 'Administrador'] %}
+                            <li><a href="{{ url_for('listar_proveedores') }}" class="block py-2 px-3 text-sm font-medium text-gray-600 rounded-md hover:text-white hover:bg-blue-400">Proveedores</a></li>
+                            <li><a href="{{ url_for('listar_conceptos') }}" class="block py-2 px-3 text-sm font-medium text-gray-600 rounded-md hover:text-white hover:bg-blue-400">Conceptos</a></li>
+                            <li><a href="{{ url_for('listar_categorias') }}" class="block py-2 px-3 text-sm font-medium text-gray-600 rounded-md hover:text-white hover:bg-blue-400">Categorías</a></li>
+                        {% endif %}
+                    </ul>
+                    
+                    <li class="border-t border-gray-200 my-2"></li>
+                    <li><span class="block py-2 px-3 text-base font-medium text-gray-500">Hola, {{ current_user.nombre_completo }}</span></li>
+                    <li><a href="{{ url_for('logout') }}" class="block w-full text-left py-2 px-3 text-base font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Cerrar Sesión</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}" class="block w-full text-left py-2 px-3 text-base font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Iniciar Sesión</a></li>
+                {% endif %}
             </ul>
-          {% endif %}
-        {% endwith %}
+        </div>
+    </nav>
 
-        {% block content %}{% endblock %}
+    <main>
+        <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <ul class="flashes">
+                {% for category, message in messages %}
+                  <li class="flash-{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
     </main>
+
+    <footer class="text-center py-8 text-gray-500">
+        <p>&copy; 2024 Gestor de Gastos. Todos los derechos reservados.</p>
+    </footer>
 
     {% block scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const hamburgerButton = document.getElementById('hamburgerButton');
-            const navLinksContainer = document.getElementById('navLinksContainer');
-            const configDropdownContent = document.getElementById('configDropdown');
-            const body = document.body;
+            // Mobile menu
+            const btn = document.querySelector('button.mobile-menu-button');
+            const menu = document.querySelector('.mobile-menu');
+            btn.addEventListener('click', () => {
+                menu.classList.toggle('hidden');
+            });
 
-            function updateMainPadding() {
-                // Si estamos en modo móvil (hamburger visible) y el menú está activo
-                if (window.getComputedStyle(hamburgerButton).display !== 'none' && navLinksContainer.classList.contains('active')) {
-                    const navHeight = navLinksContainer.offsetHeight; // Altura actual del menú expandido
-                    document.querySelector('main.container').style.paddingTop = `calc(var(--nav-height) + ${navHeight}px + 1rem)`;
-                } else {
-                    // Para escritorio o cuando el menú móvil está cerrado
-                    // Usamos un padding fijo y grande para cubrir el dropdown de escritorio
-                    document.querySelector('main.container').style.paddingTop = `calc(var(--nav-height) + var(--desktop-menu-max-height) + 1.5rem)`;
-                }
-            }
-
-            if (hamburgerButton && navLinksContainer) {
-                hamburgerButton.addEventListener('click', function() {
-                    navLinksContainer.classList.toggle('active');
-                    body.classList.toggle('menu-open');
-                    const isExpanded = navLinksContainer.classList.contains('active');
-                    hamburgerButton.setAttribute('aria-expanded', isExpanded);
-                    updateMainPadding(); // Llama a la función para actualizar el padding
+            // Mobile dropdown
+            const configToggle = document.querySelector('.mobile-config-toggle');
+            const configMenu = document.querySelector('.mobile-config-menu');
+            if (configToggle && configMenu) {
+                configToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    configMenu.classList.toggle('hidden');
                 });
             }
-
-            window.toggleConfigMenu = function(event) {
-                // Previene el comportamiento por defecto del enlace solo en modo móvil
-                if (window.getComputedStyle(hamburgerButton).display !== 'none') {
-                     event.preventDefault();
-                }
-                if (configDropdownContent) {
-                    configDropdownContent.classList.toggle('active-dropdown');
-                    // Si el menú móvil está abierto y se toggles el dropdown, recalcular padding
-                    if (navLinksContainer.classList.contains('active')) {
-                        updateMainPadding();
-                    }
-                }
-            }
-
-            // Llamar a updateMainPadding en resize para reajustar si la ventana cambia de tamaño
-            window.addEventListener('resize', updateMainPadding);
-            // Llamar en DOMContentLoaded para el estado inicial (muy importante)
-            updateMainPadding();
         });
     </script>
     {% endblock %}
