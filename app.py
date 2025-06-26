@@ -23,6 +23,7 @@ app.config["GOOGLE_OAUTH_CLIENT_ID"] = "92447400509-4qestl71gvq5547i7ukjh8pcvf7e
 app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "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"
 
 # Configuración SQLAlchemy
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://gestor_user:H-Yus8kskyulop6tJHhj@localhost:3306/gestor_gastos_db' # solo produccion
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost:3306/gestor_gastos_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
